@@ -25,7 +25,7 @@ const (
 // Split in words
 func MapFunc(file string, value string) (res []KeyValue) {
 	debug("Map %v\n", value)
-	words := strings.Fields(value)
+	words := strings.Fields(value)//按照回车拆分
 	for _, w := range words {
 		kv := KeyValue{w, ""}
 		res = append(res, kv)

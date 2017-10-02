@@ -1,5 +1,13 @@
 package mapreduce
 
+import (
+	"sort"
+	"os"
+	"encoding/json"
+	"io"
+	"log"
+)
+
 // doReduce manages one reduce task: it reads the intermediate
 // key/value pairs (produced by the map phase) for this task, sorts the
 // intermediate key/value pairs by key, calls the user-defined reduce function
@@ -8,7 +16,7 @@ func doReduce(
 	jobName string, // the name of the whole MapReduce job
 	reduceTaskNumber int, // which reduce task this is
 	outFile string, // write the output here
-	nMap int, // the number of map tasks that were run ("M" in the paper)
+	nMap int, // the number of map tasks that were run ("M" in the paper)，输入文件个数
 	reduceF func(key string, values []string) string,
 ) {
 	//
@@ -43,4 +51,50 @@ func doReduce(
 	// }
 	// file.Close()
 	//
+	kvs := []KeyValue{}
+
+	for m := 0; m < nMap; m++ {
+		filename := reduceName(jobName, m, reduceTaskNumber)
+		file, err := os.Open(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		dec := json.NewDecoder(file)
+		for {
+			kv := KeyValue{}
+			err := dec.Decode(&kv)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				log.Fatal(err)
+			}
+			kvs = append(kvs, kv)
+		}
+	}
+
+	kvMap := make(map[string][]string)
+	for _, kv := range kvs {//主要是为了把不在不同文件里的相同key合并在一起
+		kvMap[kv.Key] = append(kvMap[kv.Key], kv.Value)
+	}
+
+	// Sort the intermediate KeySet of key/value pairs.
+	keys := []string{}
+	for key := range kvMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	mergeFileName := mergeName(jobName, reduceTaskNumber)
+	mergeFile, err := os.Create(mergeFileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer mergeFile.Close()
+
+	enc := json.NewEncoder(mergeFile)
+	for _, key := range keys {
+		enc.Encode(KeyValue{key, reduceF(key, kvMap[key])})
+	}
 }
