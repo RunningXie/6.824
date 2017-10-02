@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5b4b8ff1-4d8c-4fda-a0ab-50b869c4a180" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/mapreduce/common_map.go" afterPath="$PROJECT_DIR$/src/mapreduce/common_map.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/mapreduce/common_reduce.go" afterPath="$PROJECT_DIR$/src/mapreduce/common_reduce.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/mapreduce/test_test.go" afterPath="$PROJECT_DIR$/src/mapreduce/test_test.go" />
-    </list>
+    <list default="true" id="5b4b8ff1-4d8c-4fda-a0ab-50b869c4a180" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
