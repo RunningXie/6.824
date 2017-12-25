@@ -20,7 +20,7 @@ import "sync"
 const RaftElectionTimeout = 1000 * time.Millisecond
 
 func TestInitialElection2A(t *testing.T) {
-	servers := 3
+	servers := 11
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
@@ -50,7 +50,7 @@ func TestReElection2A(t *testing.T) {
 	leader1 := cfg.checkOneLeader()
 
 	// if the leader disconnects, a new one should be elected.
-	fmt.Printf("Current leader %d is going to be killed\n",leader1)
+	fmt.Printf("Current leader %d is going to be killed\n", leader1)
 	cfg.disconnect(leader1)
 	cfg.checkOneLeader()
 
@@ -83,7 +83,8 @@ func TestBasicAgree2B(t *testing.T) {
 	defer cfg.cleanup()
 
 	fmt.Printf("Test (2B): basic agreement ...\n")
-
+	currentLeader := cfg.checkOneLeader()
+	fmt.Printf("Current leader is: %d\n", currentLeader)
 	iters := 3
 	for index := 1; index < iters+1; index++ {
 		nd, _ := cfg.nCommitted(index)
@@ -91,7 +92,7 @@ func TestBasicAgree2B(t *testing.T) {
 			t.Fatalf("some have committed before Start()")
 		}
 
-		xindex := cfg.one(index*100, servers)
+		xindex := cfg.one(index*100, servers) //提交一次客户端请求
 		if xindex != index {
 			t.Fatalf("got index %v but expected %v", xindex, index)
 		}
@@ -104,15 +105,14 @@ func TestFailAgree2B(t *testing.T) {
 	servers := 3
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
-
 	fmt.Printf("Test (2B): agreement despite follower disconnection ...\n")
 
 	cfg.one(101, servers)
-
 	// follower network disconnection
 	leader := cfg.checkOneLeader()
+	fmt.Printf("Current leader: %d\n", leader)
 	cfg.disconnect((leader + 1) % servers)
-
+	fmt.Printf("After kill follower %d current leader: %d\n", (leader+1)%servers, leader)
 	// agree despite one disconnected server?
 	cfg.one(102, servers-1)
 	cfg.one(103, servers-1)
@@ -145,7 +145,7 @@ func TestFailNoAgree2B(t *testing.T) {
 	cfg.disconnect((leader + 1) % servers)
 	cfg.disconnect((leader + 2) % servers)
 	cfg.disconnect((leader + 3) % servers)
-
+	fmt.Printf("Current leader: %d, rf %d, %d, %d are killed\n", leader, (leader+1)%servers, (leader+2)%servers, (leader+3)%servers)
 	index, _, ok := cfg.rafts[leader].Start(20)
 	if ok != true {
 		t.Fatalf("leader rejected Start()")
@@ -165,11 +165,12 @@ func TestFailNoAgree2B(t *testing.T) {
 	cfg.connect((leader + 1) % servers)
 	cfg.connect((leader + 2) % servers)
 	cfg.connect((leader + 3) % servers)
-
+	fmt.Printf("Dead rf %d, %d, %d reconnected\n", (leader+1)%servers, (leader+2)%servers, (leader+3)%servers)
 	// the disconnected majority may have chosen a leader from
 	// among their own ranks, forgetting index 2.
 	// or perhaps
 	leader2 := cfg.checkOneLeader()
+	fmt.Printf("New leader is %d\n", leader2)
 	index2, _, ok2 := cfg.rafts[leader2].Start(30)
 	if ok2 == false {
 		t.Fatalf("leader2 rejected Start()")
@@ -201,6 +202,7 @@ loop:
 		leader := cfg.checkOneLeader()
 		_, term, ok := cfg.rafts[leader].Start(1)
 		if !ok {
+			fmt.Printf("Leader changed\n")
 			// leader moved on really quickly
 			continue
 		}
@@ -213,10 +215,13 @@ loop:
 			go func(i int) {
 				defer wg.Done()
 				i, term1, ok := cfg.rafts[leader].Start(100 + i)
-				if term1 != term {
+				if term1 != term { //并发的发送所以leader的term没有改变
+					fmt.Printf("Term changed\n")
 					return
 				}
 				if ok != true {
+
+					fmt.Printf("[go] leader changed\n")
 					return
 				}
 				is <- i
@@ -224,11 +229,12 @@ loop:
 		}
 
 		wg.Wait()
-		close(is)
+		close(is) //表示不会再向管道发送信息
 
 		for j := 0; j < servers; j++ {
 			if t, _ := cfg.rafts[j].GetState(); t != term {
 				// term changed -- can't expect low RPC counts
+				fmt.Printf("Term changed back to loop\n")
 				continue loop
 			}
 		}
@@ -295,26 +301,31 @@ func TestRejoin2B(t *testing.T) {
 
 	// leader network failure
 	leader1 := cfg.checkOneLeader()
+	fmt.Printf("Kill leader %d\n", leader1)
 	cfg.disconnect(leader1)
 
 	// make old leader try to agree on some entries
+	fmt.Printf("Send cmd to old leader %d\n", leader1)
 	cfg.rafts[leader1].Start(102)
 	cfg.rafts[leader1].Start(103)
-	cfg.rafts[leader1].Start(104)
+	cfg.rafts[leader1].Start(104) //leader1是可以接受到cmd的，只是不能提交到其他rf
 
 	// new leader commits, also for index=2
 	cfg.one(103, 2)
 
 	// new leader network failure
 	leader2 := cfg.checkOneLeader()
+	fmt.Printf("Kill new leader %d\n", leader2)
 	cfg.disconnect(leader2)
 
 	// old leader connected again
+	fmt.Printf("Reconnect old leader %d\n", leader1)
 	cfg.connect(leader1)
 
 	cfg.one(104, 2)
 
 	// all together now
+	fmt.Printf("Reconnect rf %d\n", leader2)
 	cfg.connect(leader2)
 
 	cfg.one(105, servers)
@@ -333,20 +344,21 @@ func TestBackup2B(t *testing.T) {
 
 	// put leader and one follower in a partition
 	leader1 := cfg.checkOneLeader()
+	fmt.Printf("Kill rf %d, %d,%d\n", (leader1+2)%servers, (leader1+3)%servers, (leader1+4)%servers)
 	cfg.disconnect((leader1 + 2) % servers)
 	cfg.disconnect((leader1 + 3) % servers)
 	cfg.disconnect((leader1 + 4) % servers)
 
 	// submit lots of commands that won't commit
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 50; i++ { //多数的rf不能接收到更改其commitIndex，所以leader发的cmd不能实现commit，但可以把leader的日志复制过去
 		cfg.rafts[leader1].Start(rand.Int())
 	}
 
 	time.Sleep(RaftElectionTimeout / 2)
-
+	fmt.Printf("Kill rf %d,%d\n", (leader1+0)%servers, (leader1+1)%servers)
 	cfg.disconnect((leader1 + 0) % servers)
 	cfg.disconnect((leader1 + 1) % servers)
-
+	fmt.Printf("Reconnect rf %d,%d,%d\n", (leader1+2)%servers, (leader1+3)%servers, (leader1+4)%servers)
 	// allow other partition to recover
 	cfg.connect((leader1 + 2) % servers)
 	cfg.connect((leader1 + 3) % servers)
@@ -363,6 +375,7 @@ func TestBackup2B(t *testing.T) {
 	if leader2 == other {
 		other = (leader2 + 1) % servers
 	}
+	fmt.Printf("Kill rf %d\n", other)
 	cfg.disconnect(other)
 
 	// lots more commands that won't commit
@@ -374,8 +387,10 @@ func TestBackup2B(t *testing.T) {
 
 	// bring original leader back to life,
 	for i := 0; i < servers; i++ {
+		fmt.Printf("Kill rf %d\n", i)
 		cfg.disconnect(i)
 	}
+	fmt.Printf("Reconnect rf %d,%d,%d\n", (leader1+0)%servers, (leader1+1)%servers, other)
 	cfg.connect((leader1 + 0) % servers)
 	cfg.connect((leader1 + 1) % servers)
 	cfg.connect(other)
@@ -386,6 +401,7 @@ func TestBackup2B(t *testing.T) {
 	}
 
 	// now everyone
+	fmt.Printf("Reconnect all\n")
 	for i := 0; i < servers; i++ {
 		cfg.connect(i)
 	}
@@ -411,7 +427,7 @@ func TestCount2B(t *testing.T) {
 	leader := cfg.checkOneLeader()
 
 	total1 := rpcs()
-
+	fmt.Printf("total1；%d\n", total1)
 	if total1 > 30 || total1 < 1 {
 		t.Fatalf("too many or few RPCs (%v) to elect initial leader\n", total1)
 	}
@@ -457,7 +473,7 @@ loop:
 			if ix, ok := cmd.(int); ok == false || ix != cmds[i-1] {
 				if ix == -1 {
 					// term changed -- try again
-					continue loop
+					continue loop //重新跳回到loop
 				}
 				t.Fatalf("wrong value %v committed for index %v; expected %v\n", cmd, starti+i, cmds)
 			}
@@ -477,7 +493,7 @@ loop:
 		if failed {
 			continue loop
 		}
-
+		fmt.Printf("total2:%d\n", total2)
 		if total2-total1 > (iters+1+3)*3 {
 			t.Fatalf("too many RPCs (%v) for %v entries\n", total2-total1, iters)
 		}
@@ -496,7 +512,7 @@ loop:
 	for j := 0; j < servers; j++ {
 		total3 += cfg.rpcCount(j)
 	}
-
+	fmt.Printf("total3:%d\n", total3)
 	if total3-total2 > 3*20 {
 		t.Fatalf("too many RPCs (%v) for 1 second of idleness\n", total3-total2)
 	}
