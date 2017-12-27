@@ -534,30 +534,38 @@ func TestPersist12C(t *testing.T) {
 		cfg.start1(i)
 	}
 	for i := 0; i < servers; i++ {
+		fmt.Printf("Disconnect rf %d\n", i)
 		cfg.disconnect(i)
+		fmt.Printf("Reconnect rf %d\n", i)
 		cfg.connect(i)
 	}
 
 	cfg.one(12, servers)
 
 	leader1 := cfg.checkOneLeader()
+	fmt.Printf("Disconnect leader:%d\n", leader1)
 	cfg.disconnect(leader1)
+	fmt.Printf("Restart rf :%d\n", leader1)
 	cfg.start1(leader1)
 	cfg.connect(leader1)
 
 	cfg.one(13, servers)
 
 	leader2 := cfg.checkOneLeader()
+	fmt.Printf("Disconnect leader :%d\n", leader2)
 	cfg.disconnect(leader2)
 	cfg.one(14, servers-1)
+	fmt.Printf("Restart rf:%d\n", leader2)
 	cfg.start1(leader2)
 	cfg.connect(leader2)
 
-	cfg.wait(4, servers, -1) // wait for leader2 to join before killing i3
+	cfg.wait(4, servers, -1) // wait for leader2 to join before killing i3,等到所有机器都提交了第4条cmd
 
 	i3 := (cfg.checkOneLeader() + 1) % servers
+	fmt.Printf("Disconnect rf：%d\n", i3)
 	cfg.disconnect(i3)
 	cfg.one(15, servers-1)
+	fmt.Printf("Reconnect rf:%d\n", i3)
 	cfg.start1(i3)
 	cfg.connect(i3)
 
@@ -575,40 +583,41 @@ func TestPersist22C(t *testing.T) {
 
 	index := 1
 	for iters := 0; iters < 5; iters++ {
-		cfg.one(10+index, servers)
+		test := cfg.one(10+index, servers) //可能会发送给错误的leader，但会通过检查commite的rf数来判断，直到提交给正确的leader为止
+		fmt.Printf("Cmd request result；%d\n", test)
 		index++
 
 		leader1 := cfg.checkOneLeader()
-
+		fmt.Printf("Current leader:%d\n", leader1)
+		fmt.Printf("1.Disconnect rf:%d,%d\n", (leader1+1)%servers, (leader1+2)%servers)
 		cfg.disconnect((leader1 + 1) % servers)
 		cfg.disconnect((leader1 + 2) % servers)
 
-		cfg.one(10+index, servers-2)
+		cfg.one(10+index, servers-2) //由于发送了新的cmd，因此下一次选主的结果一定是这三个rf中重启的那一个
 		index++
-
+		fmt.Printf("2.Disconnect rf:%d,%d,%d\n", (leader1+0)%servers, (leader1+3)%servers, (leader1+4)%servers)
 		cfg.disconnect((leader1 + 0) % servers)
 		cfg.disconnect((leader1 + 3) % servers)
 		cfg.disconnect((leader1 + 4) % servers)
-
+		fmt.Printf("Restart rf:%d,%d\n", (leader1+1)%servers, (leader1+2)%servers)
 		cfg.start1((leader1 + 1) % servers)
 		cfg.start1((leader1 + 2) % servers)
 		cfg.connect((leader1 + 1) % servers)
 		cfg.connect((leader1 + 2) % servers)
 
 		time.Sleep(RaftElectionTimeout)
-
+		fmt.Printf("Restart rf:%d\n", (leader1+3)%servers)
 		cfg.start1((leader1 + 3) % servers)
 		cfg.connect((leader1 + 3) % servers)
 
 		cfg.one(10+index, servers-2)
 		index++
-
+		fmt.Printf("time:%v,Reconnect rf:%d,%d\n", time.Now().Format("15:04:05"), (leader1+4)%servers, (leader1+0)%servers)
 		cfg.connect((leader1 + 4) % servers)
 		cfg.connect((leader1 + 0) % servers)
 	}
 
 	cfg.one(1000, servers)
-
 	fmt.Printf("  ... Passed\n")
 }
 
@@ -622,18 +631,21 @@ func TestPersist32C(t *testing.T) {
 	cfg.one(101, 3)
 
 	leader := cfg.checkOneLeader()
+	fmt.Printf("Disconnect rf:%d\n", (leader+2)%servers)
 	cfg.disconnect((leader + 2) % servers)
 
 	cfg.one(102, 2)
-
+	fmt.Printf("Delete rf:%d,%d\n", (leader+0)%servers, (leader+1)%servers)
 	cfg.crash1((leader + 0) % servers)
 	cfg.crash1((leader + 1) % servers)
+	fmt.Printf("Reconnect rf:%d\n", (leader+2)%servers)
 	cfg.connect((leader + 2) % servers)
+	fmt.Printf("Restart rf %d\n", (leader+0)%servers)
 	cfg.start1((leader + 0) % servers)
 	cfg.connect((leader + 0) % servers)
 
 	cfg.one(103, 2)
-
+	fmt.Printf("Restart rf :%d\n", (leader+1)%servers)
 	cfg.start1((leader + 1) % servers)
 	cfg.connect((leader + 1) % servers)
 
@@ -682,6 +694,7 @@ func TestFigure82C(t *testing.T) {
 		}
 
 		if leader != -1 {
+			fmt.Printf("Crash leader %d\n", leader)
 			cfg.crash1(leader)
 			nup -= 1
 		}
@@ -689,13 +702,14 @@ func TestFigure82C(t *testing.T) {
 		if nup < 3 {
 			s := rand.Int() % servers
 			if cfg.rafts[s] == nil {
+				fmt.Printf("Restart rf %d\n", s)
 				cfg.start1(s)
 				cfg.connect(s)
 				nup += 1
 			}
 		}
 	}
-
+	fmt.Printf("Restart all crashed/n")
 	for i := 0; i < servers; i++ {
 		if cfg.rafts[i] == nil {
 			cfg.start1(i)
@@ -737,7 +751,7 @@ func TestUnreliableAgree2C(t *testing.T) {
 	fmt.Printf("  ... Passed\n")
 }
 
-func TestFigure8Unreliable2C(t *testing.T) {
+func TestFigure8Unreliable2C(t *testing.T) { //检测leader是不是把多条待commit的log一并提交commit，而不是逐一commit
 	servers := 5
 	cfg := make_config(t, servers, true)
 	defer cfg.cleanup()

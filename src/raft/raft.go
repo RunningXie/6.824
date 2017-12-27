@@ -76,6 +76,9 @@ func (rf *Raft) GetState() (int, bool) {
 	// Your code here (2A).
 	return rf.currentTerm, rf.state == STATE_LEADER
 }
+func (rf *Raft) getLastTerm() int {
+	return rf.log[len(rf.log)-1].LogTerm
+}
 
 //
 // save Raft's persistent state to stable storage,
@@ -92,6 +95,24 @@ func (rf *Raft) persist() {
 	e.Encode(rf.log)
 	data := w.Bytes()
 	rf.persister.SaveRaftState(data)
+}
+
+func (rf *Raft) readSnapshort(data []byte) { //byte字符类型
+	rf.readPersist(rf.persister.ReadRaftState())
+	if len(data) == 0 {
+		return
+	}
+	d := gob.NewDecoder(bytes.NewBuffer(data))
+	var lastIncludeTerm int
+	var lastIncludeIndex int
+	d.Decode(&lastIncludeIndex)
+	d.Decode(&lastIncludeTerm)
+	rf.commitIndex = lastIncludeIndex
+	rf.lastApplied = lastIncludeIndex
+	rf.log = truncateLog(lastIncludeIndex, lastIncludeTerm, rf.log)
+	go func() {
+		rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: data}
+	}()
 }
 
 //
@@ -144,13 +165,15 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		return
 	}
 	if args.Term > rf.currentTerm {
-		fmt.Printf("rf %d current term %d < args.term %d, update current term\n", rf.me, rf.currentTerm, args.Term)
+		fmt.Printf("rf %d current term %d < args.term %d,candidate term:%d, update current term\n", rf.me, rf.currentTerm, args.Term, args.CandidateID)
 		rf.state = STATE_FOLLOWER
 		rf.voteFor = -1
 		rf.currentTerm = args.Term
 	}
 	reply.Term = rf.currentTerm
-	if args.LastLogTerm > rf.log[len(rf.log)-1].LogTerm || (args.LastLogTerm == rf.log[len(rf.log)-1].LogTerm && args.LastLogIndex >= rf.log[len(rf.log)-1].LogIndex) { //通过日志的对比防止刚刚重连的raft获得选票
+	lastTerm := rf.getLastTerm()
+	fmt.Printf("args.LastLogTerm:%d,rf.log[len(rf.log)-1].LogTerm:%d,args.LastLogIndex:%d,rf.log[len(rf.log)-1].LogIndex:%d\n", args.LastLogTerm, rf.log[len(rf.log)-1].LogTerm, args.LastLogIndex, rf.log[len(rf.log)-1].LogIndex)
+	if args.LastLogTerm > lastTerm || (args.LastLogTerm == lastTerm && args.LastLogIndex >= rf.log[len(rf.log)-1].LogIndex) { //通过日志的对比防止刚刚重连的raft获得选票
 		if rf.voteFor == -1 || rf.voteFor == args.CandidateID {
 			fmt.Printf("rf %v currentTerm:%v, vote for: candidate%v args term:%v\n", rf.me, rf.currentTerm, args.CandidateID, args.Term)
 			rf.grantVoteChan <- true
@@ -201,12 +224,12 @@ func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *Reques
 		if reply.Term > rf.currentTerm { //candidate term>当前rf.term,投票被拒绝
 			rf.state = STATE_FOLLOWER
 			rf.voteFor = -1
-			rf.persist()
 			rf.currentTerm = reply.Term
+			rf.persist() //存储voteFor,currentTerm,log,所以要放在最后
 		}
 		if reply.VoteGranted {
 			rf.voteCount++
-			fmt.Printf("%d's voteCount is：%d, state is %v\n", rf.me, rf.voteCount, rf.state)
+			fmt.Printf("%d's voteCount is：%d\n", rf.me, rf.voteCount)
 			if rf.state == STATE_CANDIDATE && rf.voteCount*2 > len(rf.peers) {
 				rf.state = STATE_FOLLOWER
 				rf.leaderChan <- true
@@ -285,14 +308,13 @@ func (rf *Raft) broadcastVoteRequest() {
 	rf.mu.Lock()
 	args.Term = rf.currentTerm
 	args.CandidateID = rf.me
-	args.LastLogTerm = rf.log[len(rf.log)-1].LogTerm
+	args.LastLogTerm = rf.getLastTerm()
 	args.LastLogIndex = rf.getLastIndex()
 	rf.mu.Unlock()
 	for i := range rf.peers {
 		if i != rf.me && rf.state == STATE_CANDIDATE {
 			go func(i int) {
 				var reply RequestVoteReply
-				fmt.Printf("candidate %v RequestVote to %v\n", rf.me, i)
 				rf.sendRequestVote(i, &args, &reply)
 			}(i)
 		}
@@ -342,11 +364,11 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 	}
 	baseIndex := rf.log[0].LogIndex
 	if baseIndex <= args.LastLogIndex {
-		if baseIndex != args.LastLogIndex {
+		if baseIndex < args.LastLogIndex {
 			term := rf.log[args.LastLogIndex-baseIndex].LogTerm
 			if args.LastLogTerm != term {
 				for i := args.LastLogIndex - 1; i >= baseIndex; i-- {
-					if rf.log[i].LogTerm != term {
+					if rf.log[i-baseIndex].LogTerm != term {
 						reply.NextLogIndex = i + 1
 						break
 					}
@@ -394,7 +416,7 @@ func (rf *Raft) sendAppendEntries(severIndex int, args *appendEntriesArgs, reply
 		}
 		if reply.Success {
 			if len(args.Entries) > 0 {
-				rf.nextIndex[severIndex] += len(args.Entries)
+				rf.nextIndex[severIndex] = args.Entries[len(args.Entries)-1].LogIndex + 1
 				rf.matchIndex[severIndex] = rf.nextIndex[severIndex] - 1
 			}
 		} else {
@@ -461,10 +483,11 @@ func (rf *Raft) broadcastAppendEntries() {
 	defer rf.mu.Unlock()
 	newCommitIndex := rf.commitIndex
 	lastCommitIndex := rf.getLastIndex()
+	baseIndex := rf.log[0].LogIndex
 	for i := rf.commitIndex + 1; i <= lastCommitIndex; i++ { //每次caseAppednEntries先同步一下commitndex
 		count := 1
 		for j := range rf.peers {
-			if j != rf.me && rf.matchIndex[j] >= i && rf.log[i].LogTerm == rf.currentTerm {
+			if j != rf.me && rf.matchIndex[j] >= i && rf.log[i-baseIndex].LogTerm == rf.currentTerm {
 				count++
 			}
 		}
@@ -479,15 +502,15 @@ func (rf *Raft) broadcastAppendEntries() {
 	}
 	for i := range rf.peers {
 		if i != rf.me && rf.state == STATE_LEADER {
-			if rf.nextIndex[i] > rf.log[0].LogIndex {
+			if rf.nextIndex[i] > baseIndex {
 				var args appendEntriesArgs
 				args.LastLogIndex = rf.nextIndex[i] - 1
 				args.LeaderId = rf.me
 				args.Term = rf.currentTerm
-				args.LastLogTerm = rf.log[args.LastLogIndex].LogTerm
-				fmt.Printf("[broadcast append entries]baseIndex:%d PrevLogIndex:%d, severIndex: %d\n", rf.log[0].LogIndex, args.LastLogIndex, i)
-				args.Entries = make([]LogEntry, len(rf.log[args.LastLogIndex+1:])) //会把leader的新日志存在里面
-				copy(args.Entries, rf.log[args.LastLogIndex+1:])
+				args.LastLogTerm = rf.log[args.LastLogIndex-baseIndex].LogTerm
+				fmt.Printf("[broadcast append entries]baseIndex:%d PrevLogIndex:%d, severIndex: %d,current leader: %d\n", rf.log[0].LogIndex, args.LastLogIndex, i, rf.me)
+				args.Entries = make([]LogEntry, len(rf.log[args.LastLogIndex+1-baseIndex:])) //会把leader的新日志存在里面
+				copy(args.Entries, rf.log[args.LastLogIndex+1-baseIndex:])
 				args.LeaderCommitIndex = rf.commitIndex
 				go func(severIndex int, args appendEntriesArgs) {
 					var reply appendEntriesReply
@@ -523,12 +546,14 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.voteFor = -1
 	rf.log = append(rf.log, LogEntry{LogTerm: 0})
 	rf.currentTerm = 0
-	rf.commitChan = make(chan bool)
-	rf.heartBeatChan = make(chan bool)
-	rf.leaderChan = make(chan bool)
-	rf.grantVoteChan = make(chan bool)
+	rf.commitChan = make(chan bool, 100) //设置一定的缓存空间，防止彼此阻塞
+	rf.heartBeatChan = make(chan bool, 100)
+	rf.leaderChan = make(chan bool, 100)
+	rf.grantVoteChan = make(chan bool, 100)
+	rf.applyChan = applyCh
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
+	rf.readSnapshort(persister.ReadSnapshot())
 	go func() {
 		for {
 			switch rf.state {
@@ -536,7 +561,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 				select {
 				case <-rf.heartBeatChan:
 				case <-rf.grantVoteChan: //每次投票后都会重新计时
-				case <-time.After(time.Duration(rand.Int63()%330+550) * time.Millisecond): //最开始从follower切换到candidate状态的等待时间也是随机的
+				case <-time.After(time.Duration(rand.Int63()%333+550) * time.Millisecond): //最开始从follower切换到candidate状态的等待时间也是随机的
 					rf.state = STATE_CANDIDATE
 				}
 			case STATE_CANDIDATE:
@@ -546,17 +571,16 @@ func Make(peers []*labrpc.ClientEnd, me int,
 				rf.voteCount = 1
 				rf.persist()
 				rf.mu.Unlock()
-				fmt.Printf("%d change into candidate in term %d\n", rf.me, rf.currentTerm)
 				go rf.broadcastVoteRequest()
 				select {
-				case <-time.After(time.Duration(rand.Int63()%330+550) * time.Millisecond):
+				case <-time.After(time.Duration(rand.Int63()%333+550) * time.Millisecond):
 				case <-rf.heartBeatChan: //心跳并不会影响纪元
 					fmt.Printf("Candidate %d receive heartBeatChan, state change into follower\n", rf.me)
 					rf.state = STATE_FOLLOWER
 				case <-rf.leaderChan:
 					rf.mu.Lock()
 					rf.state = STATE_LEADER
-					fmt.Printf("%d change into leader\n", rf.me)
+					fmt.Printf("time:%v,%d change into leader\n", time.Now().Format("15:04:05"), rf.me)
 					rf.nextIndex = make([]int, len(rf.peers))
 					rf.matchIndex = make([]int, len(rf.peers))
 					for i := range rf.peers {
@@ -566,7 +590,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 					rf.mu.Unlock()
 				}
 			case STATE_LEADER:
-				fmt.Printf("Leader:%v is going to broadcast append entries\n", rf.me)
 				rf.broadcastAppendEntries()
 				time.Sleep(HEARTBEAT_INTERVAL)
 			}
@@ -578,7 +601,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 			case <-rf.commitChan:
 				rf.mu.Lock()
 				for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
-					applyCh <- ApplyMsg{Index: i, Command: rf.log[i].LogContent} //剩下的属性是默认值
+					applyCh <- ApplyMsg{Index: i, Command: rf.log[i-rf.log[0].LogIndex].LogContent} //剩下的属性是默认值,applyCh是在start1()中取出，然后更改日志的
 					fmt.Printf("[commitChan] me: %d msg: %v\n", rf.me, ApplyMsg{Index: i, Command: rf.log[i].LogContent})
 					rf.lastApplied = i
 				}
