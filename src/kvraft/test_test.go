@@ -81,12 +81,12 @@ func checkConcurrentAppends(t *testing.T, v string, counts []int) {
 		lastoff := -1
 		for j := 0; j < counts[i]; j++ {
 			wanted := "x " + strconv.Itoa(i) + " " + strconv.Itoa(j) + " y"
-			off := strings.Index(v, wanted)
+			off := strings.Index(v, wanted) //查找wanted在v中的位置
 			if off < 0 {
 				t.Fatalf("%v missing element %v in Append result %v", i, wanted, v)
 			}
 			off1 := strings.LastIndex(v, wanted)
-			if off1 != off {
+			if off1 != off { //最后一个和第一个的index相同，证明该append只提交了一次
 				t.Fatalf("duplicate element %v in Append result", wanted)
 			}
 			if off <= lastoff {
@@ -105,7 +105,7 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 		for i := 0; i < cfg.n; i++ {
 			a[i] = (rand.Int() % 2)
 		}
-		pa := make([][]int, 2)
+		pa := make([][]int, 2) //2行
 		for i := 0; i < 2; i++ {
 			pa[i] = make([]int, 0)
 			for j := 0; j < cfg.n; j++ {
@@ -129,10 +129,10 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 // size) shouldn't exceed 2*maxraftstate.
 func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash bool, partitions bool, maxraftstate int) {
 	const nservers = 5
-	cfg := make_config(t, tag, nservers, unreliable, maxraftstate)
+	cfg := make_config(t, tag, nservers, unreliable, maxraftstate) //初始化生成的server彼此之间会connect all
 	defer cfg.cleanup()
 
-	ck := cfg.makeClient(cfg.All())
+	ck := cfg.makeClient(cfg.All()) //先默认创建一个client
 
 	done_partitioner := int32(0)
 	done_clients := int32(0)
@@ -145,23 +145,24 @@ func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash 
 		// log.Printf("Iteration %v\n", i)
 		atomic.StoreInt32(&done_clients, 0)
 		atomic.StoreInt32(&done_partitioner, 0)
-		go spawn_clients_and_wait(t, cfg, nclients, func(cli int, myck *Clerk, t *testing.T) {
+		go spawn_clients_and_wait(t, cfg, nclients, func(cli int, myck *Clerk, t *testing.T) { //创建参数中要求的client
 			j := 0
 			defer func() {
 				clnts[cli] <- j
 			}()
 			last := ""
 			key := strconv.Itoa(cli)
+			fmt.Printf("[RaftKV]client:%d: client new put,key:%v,value: %v\n", cli, key, last)
 			myck.Put(key, last)
 			for atomic.LoadInt32(&done_clients) == 0 {
 				if (rand.Int() % 1000) < 500 {
 					nv := "x " + strconv.Itoa(cli) + " " + strconv.Itoa(j) + " y"
-					// log.Printf("%d: client new append %v\n", cli, nv)
+					fmt.Printf("[RaftKV]client:%d: client new append key:%v,value:%v\n", cli, key, nv)
 					myck.Append(key, nv)
 					last = NextValue(last, nv)
 					j++
 				} else {
-					// log.Printf("%d: client new get %v\n", cli, key)
+					fmt.Printf("[RaftKV]client:%d: client new get %v\n", cli, key)
 					v := myck.Get(key)
 					if v != last {
 						log.Fatalf("get wrong value, key %v, wanted:\n%v\n, got\n%v\n", key, last, v)
@@ -181,26 +182,26 @@ func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash 
 		atomic.StoreInt32(&done_partitioner, 1) // tell partitioner to quit
 
 		if partitions {
-			// log.Printf("wait for partitioner\n")
 			<-ch_partitioner
 			// reconnect network and submit a request. A client may
 			// have submitted a request in a minority.  That request
 			// won't return until that server discovers a new term
 			// has started.
-			cfg.ConnectAll()
+			fmt.Printf("[RaftKV]Connect all servers\n")
+			cfg.ConnectAll() //恢复为正常互通
 			// wait for a while so that we have a new term
 			time.Sleep(electionTimeout)
 		}
 
 		if crash {
-			// log.Printf("shutdown servers\n")
+			fmt.Printf("[RaftKV]Disconnect all servers\n")
 			for i := 0; i < nservers; i++ {
 				cfg.ShutdownServer(i)
 			}
 			// Wait for a while for servers to shutdown, since
 			// shutdown isn't a real crash and isn't instantaneous
 			time.Sleep(electionTimeout)
-			// log.Printf("restart servers\n")
+			fmt.Printf("[RaftKV]Reconnect all servers\n")
 			// crash and re-start all
 			for i := 0; i < nservers; i++ {
 				cfg.StartServer(i)
@@ -210,13 +211,13 @@ func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash 
 
 		// log.Printf("wait for clients\n")
 		for i := 0; i < nclients; i++ {
-			// log.Printf("read from clients %d\n", i)
+			fmt.Printf("[RaftKV]read from clients %d\n", i)
 			j := <-clnts[i]
 			if j < 10 {
-				log.Printf("Warning: client %d managed to perform only %d put operations in 1 sec?\n", i, j)
+				fmt.Printf("[RaftKV]Warning: client %d managed to perform only %d put operations in 1 sec?\n", i, j)
 			}
 			key := strconv.Itoa(i)
-			// log.Printf("Check %v for client %d\n", j, i)
+			fmt.Printf("[RaftKV]Check %v for client %d\n", j, i)
 			v := ck.Get(key)
 			checkClntAppends(t, i, v, j)
 		}
@@ -273,7 +274,6 @@ func TestUnreliableOneKey(t *testing.T) {
 	for i := 0; i < nclient; i++ {
 		counts = append(counts, upto)
 	}
-
 	vx := ck.Get("k")
 	checkConcurrentAppends(t, vx, counts)
 
@@ -308,7 +308,7 @@ func TestOnePartition(t *testing.T) {
 	done0 := make(chan bool)
 	done1 := make(chan bool)
 
-	fmt.Printf("Test: No progress in minority ...\n")
+	fmt.Printf("Test: No progress in minority ...\n") //访问少数个server不能commit和get
 	go func() {
 		ckp2a.Put("1", "15")
 		done0 <- true
