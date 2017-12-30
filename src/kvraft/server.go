@@ -61,7 +61,7 @@ func (kv *RaftKV) AppendEntryToLog(entry Op) bool {
 	case op := <-ch: //leader commit后会把相应的log放在管道里
 		return op == entry
 	case <-time.After(1 * time.Second):
-		fmt.Printf("[RaftKV] AppendEntryToLog timeout\n")
+		fmt.Printf("[RaftKV] AppendEntryToLog timeout, %d is old leader\n",kv.me)
 		return false
 	}
 }
@@ -85,6 +85,7 @@ func (kv *RaftKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) { //put,
 	// Your code here.
 	ok := kv.AppendEntryToLog(Op{Kind: args.Op, Id: args.Id, RequestId: args.RequestId, Key: args.Key, Value: args.Value})
 	if ok {
+		fmt.Printf("[RaftKV]server leader:%v %v ,key:%v,value:%v\n",kv.me,args.Op,args.Key,args.Value)
 		reply.WrongLeader = false
 		reply.Err = OK
 	} else {
@@ -145,6 +146,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 				d.Decode(&lastIncludeTerm)
 				kv.db = make(map[string]string) //数据都存在db里，kv是指这个map结构
 				kv.ack = make(map[int64]int)
+				fmt.Printf("kv:%v,db changed\n",kv.me)
 				d.Decode(&kv.db)
 				d.Decode(&kv.ack)
 				kv.mu.Unlock()

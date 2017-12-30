@@ -152,17 +152,17 @@ func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash 
 			}()
 			last := ""
 			key := strconv.Itoa(cli)
-			fmt.Printf("[RaftKV]client:%d: client new put,key:%v,value: %v\n", cli, key, last)
+			fmt.Printf("[RaftKV]client:%d: send new put,key:%v,value: %v\n", cli, key, last)
 			myck.Put(key, last)
 			for atomic.LoadInt32(&done_clients) == 0 {
 				if (rand.Int() % 1000) < 500 {
 					nv := "x " + strconv.Itoa(cli) + " " + strconv.Itoa(j) + " y"
-					fmt.Printf("[RaftKV]client:%d: client new append key:%v,value:%v\n", cli, key, nv)
+					fmt.Printf("[RaftKV]client:%d: send new append key:%v,value:%v\n", cli, key, nv)
 					myck.Append(key, nv)
 					last = NextValue(last, nv)
 					j++
 				} else {
-					fmt.Printf("[RaftKV]client:%d: client new get %v\n", cli, key)
+					fmt.Printf("[RaftKV]client:%d: send new get %v\n", cli, key)
 					v := myck.Get(key)
 					if v != last {
 						log.Fatalf("get wrong value, key %v, wanted:\n%v\n, got\n%v\n", key, last, v)
@@ -211,7 +211,6 @@ func GenericTest(t *testing.T, tag string, nclients int, unreliable bool, crash 
 
 		// log.Printf("wait for clients\n")
 		for i := 0; i < nclients; i++ {
-			fmt.Printf("[RaftKV]read from clients %d\n", i)
 			j := <-clnts[i]
 			if j < 10 {
 				fmt.Printf("[RaftKV]Warning: client %d managed to perform only %d put operations in 1 sec?\n", i, j)
@@ -479,7 +478,7 @@ func TestSnapshotSize(t *testing.T) {
 	}
 
 	// check that the snapshots are not unreasonably large
-	if cfg.SnapshotSize() > maxsnapshotstate {
+	if cfg.SnapshotSize() > maxsnapshotstate {//要求sanpshot存储的东西不能太多
 		t.Fatalf("snapshot too large (%v > %v)", cfg.SnapshotSize(), maxsnapshotstate)
 	}
 

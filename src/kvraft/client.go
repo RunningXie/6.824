@@ -59,7 +59,7 @@ func (ck *Clerk) Get(key string) string {
 			var reply GetReply
 			ok := sever.Call("RaftKV.Get", &args, &reply)
 			if ok && reply.WrongLeader == false {
-				fmt.Printf("[RaftKV]Get value:%v,key:%v\n", args.Key, reply.Value)
+				fmt.Printf("[RaftKV]Get key:%v,value:%v\n", args.Key, reply.Value)
 				return reply.Value
 			}
 		}

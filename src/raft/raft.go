@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"labrpc"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -100,16 +101,20 @@ func (rf *Raft) persist() {
 func (rf *Raft) readSnapshort(data []byte) { //byte字符类型
 	rf.readPersist(rf.persister.ReadRaftState())
 	if len(data) == 0 {
+		fmt.Printf("len(rf:%d's snapshot) == 0,return\n", rf.me)
 		return
 	}
+
 	d := gob.NewDecoder(bytes.NewBuffer(data))
 	var lastIncludeTerm int
 	var lastIncludeIndex int
-	d.Decode(&lastIncludeIndex)
+	d.Decode(&lastIncludeIndex) //相当于io.Reader,顺序要和Encoder对应好
 	d.Decode(&lastIncludeTerm)
 	rf.commitIndex = lastIncludeIndex
+	fmt.Printf("rf.commitIndex；%d,lastIncludeIndex；%d\n", rf.commitIndex, lastIncludeIndex)
 	rf.lastApplied = lastIncludeIndex
 	rf.log = truncateLog(lastIncludeIndex, lastIncludeTerm, rf.log)
+	fmt.Printf("rf:%d,Intinial with snapshot,lastIncludeIndex:%d, lastIncludeTerm:%d,rf.log:%v\n", rf.me, lastIncludeIndex, lastIncludeTerm, rf.log)
 	go func() {
 		rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: data}
 	}()
@@ -268,9 +273,10 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) { //从客户端接�
 	}
 	return index, term, isLeader
 }
-func (rf *Raft) GetPersistSize()int{
+func (rf *Raft) GetPersistSize() int {
 	return rf.persister.RaftStateSize()
 }
+
 //
 // the tester calls Kill() when a Raft instance won't
 // be needed again. you are not required to do anything
@@ -305,27 +311,30 @@ type LogEntry struct {
 	LogIndex   int
 }
 
-func (rf *Raft) StartSnapShot(snapshot []byte,index int){
+func (rf *Raft) StartSnapShot(snapshot []byte, index int) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	baseIndex:=rf.log[0].LogIndex
-	lastIndex:=rf.getLastIndex()
+	baseIndex := rf.log[0].LogIndex
+	lastIndex := rf.getLastIndex() //这个值会等于index，从而实现清空当前日志
 	if baseIndex >= index || lastIndex < index {
 		return
 	}
 	var newEntries []LogEntry
-	newEntries=append(newEntries,LogEntry{LogIndex:index,LogTerm:rf.log[index-baseIndex].LogTerm})
-		newEntries=append(newEntries,rf.log[index-baseIndex+1:]...)
-		rf.log=newEntries
-		rf.persist()
-		w:=new(bytes.Buffer)
-		e:=gob.NewEncoder(w)
-		e.Encode(newEntries[0].LogIndex)
-		e.Encode(newEntries[0].LogTerm)
-		data:=w.Bytes()
-		data=append(data,snapshot...)//data包含两部分，前面是logIndex和logTerm后面是对应的kv.db和kv.ack
-		rf.persister.SaveRaftState(data)
-
+	newEntries = append(newEntries, LogEntry{LogIndex: index, LogTerm: rf.log[index-baseIndex].LogTerm})
+	for i := index + 1; i <= lastIndex; i++ {
+		newEntries = append(newEntries, rf.log[i-baseIndex])
+	}
+	//newEntries=append(newEntries,rf.log[index-baseIndex+1:]...)
+	fmt.Printf("rf:%d,start snapshot, newEntries(term,cmd,index):%v\n", rf.me, newEntries)
+	rf.log = newEntries
+	rf.persist()
+	w := new(bytes.Buffer)
+	e := gob.NewEncoder(w)
+	e.Encode(newEntries[0].LogIndex)
+	e.Encode(newEntries[0].LogTerm)
+	data := w.Bytes()
+	data = append(data, snapshot...) //data包含两部分，前面是logIndex和logTerm后面是对应的kv.db和kv.ack
+	rf.persister.SaveSnapshot(data)
 }
 func (rf *Raft) broadcastVoteRequest() {
 	var args RequestVoteArgs
@@ -389,7 +398,7 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 	baseIndex := rf.log[0].LogIndex
 	if baseIndex <= args.LastLogIndex {
 		if baseIndex < args.LastLogIndex {
-			term := rf.log[args.LastLogIndex-baseIndex].LogTerm
+			term := rf.log[args.LastLogIndex-baseIndex].LogTerm //index的值是一直递增的，但log会因为snapshot而不断变化长度
 			if args.LastLogTerm != term {
 				for i := args.LastLogIndex - 1; i >= baseIndex; i-- {
 					if rf.log[i-baseIndex].LogTerm != term {
@@ -397,6 +406,7 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 						break
 					}
 				}
+				fmt.Printf("args.LastLogTerm:%v != term:%v,reply.NextLogIndex:%v\n", args.LastLogTerm, term, reply.NextLogIndex)
 				return
 			}
 		}
@@ -414,6 +424,7 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 		}
 		rf.commitChan <- true
 	}
+
 	return
 }
 func (rf *Raft) sendAppendEntries(severIndex int, args *appendEntriesArgs, reply *appendEntriesReply) bool {
@@ -472,16 +483,17 @@ func truncateLog(lastIndex, lastTerm int, log []LogEntry) []LogEntry {
 	}
 	return newLogEntry
 }
-func (rf *Raft) installSnapShort(args snapShortArgs, reply *snapShortReply) {
+func (rf *Raft) InstallSnapshot(args snapShortArgs, reply *snapShortReply) { //必须设为公有方法
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 	if args.Term < rf.currentTerm {
 		reply.Term = rf.currentTerm
 		return
 	}
+	fmt.Printf("Rf:%d,install snapshot\n", rf.me)
 	rf.heartBeatChan <- true
 	rf.state = STATE_FOLLOWER
-	rf.persister.SaveRaftState(args.Data)
+	rf.persister.SaveSnapshot(args.Data)
 	rf.log = truncateLog(args.LastIndex, args.LastTerm, rf.log)
 	rf.lastApplied = args.LastIndex
 	rf.commitIndex = args.LastIndex
@@ -489,7 +501,7 @@ func (rf *Raft) installSnapShort(args snapShortArgs, reply *snapShortReply) {
 	rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: args.Data}
 }
 func (rf *Raft) sendInstallSnapShort(severIndex int, args snapShortArgs, reply *snapShortReply) bool {
-	ok := rf.peers[severIndex].Call("Raft.installSnapShort", args, reply)
+	ok := rf.peers[severIndex].Call("Raft.InstallSnapshot", args, reply)
 	if ok {
 		if reply.Term > rf.currentTerm {
 			rf.state = STATE_FOLLOWER
@@ -505,6 +517,12 @@ func (rf *Raft) sendInstallSnapShort(severIndex int, args snapShortArgs, reply *
 func (rf *Raft) broadcastAppendEntries() {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Printf("rf.matchIndex:%v,rf.log:%v,e:%v,baseIndex:%v,lastIndex:%v\n", rf.matchIndex, rf.log, e, rf.log[0].LogIndex, rf.commitIndex)
+			os.Exit(0)
+		}
+	}()
 	newCommitIndex := rf.commitIndex
 	lastCommitIndex := rf.getLastIndex()
 	baseIndex := rf.log[0].LogIndex
@@ -541,7 +559,7 @@ func (rf *Raft) broadcastAppendEntries() {
 					rf.sendAppendEntries(severIndex, &args, &reply)
 				}(i, args)
 
-			} else {
+			} else { //适用于掉线一段时间后重新连接的情况
 				var args snapShortArgs
 				args.Term = rf.currentTerm
 				args.LeaderId = rf.me
@@ -577,6 +595,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.applyChan = applyCh
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
+
 	rf.readSnapshort(persister.ReadSnapshot())
 	go func() {
 		for {

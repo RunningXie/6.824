@@ -13,8 +13,8 @@ import "sync"
 
 type Persister struct {
 	mu        sync.Mutex
-	raftstate []byte
-	snapshot  []byte
+	raftstate []byte //这里包含了current term, vote for,log
+	snapshot  []byte ////snapshot包含kv.db,kv.ack,lastLogIndex,lastLogTerm
 }
 
 func MakePersister() *Persister {
