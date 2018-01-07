@@ -6,7 +6,10 @@ import (
 )
 
 // import "time"
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func check(t *testing.T, groups []int, ck *Clerk) {
 	c := ck.Query(-1)
@@ -22,7 +25,7 @@ func check(t *testing.T, groups []int, ck *Clerk) {
 		}
 	}
 
-	// any un-allocated shards?
+	// any un-allocated shards?，是不是每个shard都有对应的group
 	if len(groups) > 0 {
 		for s, g := range c.Shards {
 			_, ok := c.Groups[g]
@@ -35,7 +38,7 @@ func check(t *testing.T, groups []int, ck *Clerk) {
 	// more or less balanced sharding?
 	counts := map[int]int{}
 	for _, g := range c.Shards {
-		counts[g] += 1
+		counts[g] += 1//key为gid，value为该gid所包含的shard数
 	}
 	min := 257
 	max := 0
@@ -47,8 +50,8 @@ func check(t *testing.T, groups []int, ck *Clerk) {
 			min = counts[g]
 		}
 	}
-	if max > min+1 {
-		t.Fatalf("max %v too much larger than min %v", max, min)
+	if max > min+1 {//balance的结果相当于保证每个group中的shard数相差不超过一
+		t.Fatalf("c.shards:%v,max %v too much larger than min %v,counts:%v,c.group:%v", c.Shards,max, min,counts,c.Groups)
 	}
 }
 
@@ -79,7 +82,7 @@ func check_same_config(t *testing.T, c1 Config, c2 Config) {
 
 func TestBasic(t *testing.T) {
 	const nservers = 3
-	cfg := make_config(t, nservers, false)
+	cfg := make_config(t, nservers, false)//创建了nservers个raft作为master shard但是没有group
 	defer cfg.cleanup()
 
 	ck := cfg.makeClient(cfg.All())
@@ -87,11 +90,13 @@ func TestBasic(t *testing.T) {
 	fmt.Printf("Test: Basic leave/join ...\n")
 
 	cfa := make([]Config, 6)
-	cfa[0] = ck.Query(-1)
-
+	fmt.Printf("Query -1\n")
+	cfa[0] = ck.Query(-1)//对应着sm.config的key
+	
 	check(t, []int{}, ck)
 
 	var gid1 int = 1
+	fmt.Printf("Join 1,{s,y,z}\n")
 	ck.Join(map[int][]string{gid1: []string{"x", "y", "z"}})
 	check(t, []int{gid1}, ck)
 	cfa[1] = ck.Query(-1)
@@ -114,11 +119,11 @@ func TestBasic(t *testing.T) {
 	if len(sa2) != 3 || sa2[0] != "a" || sa2[1] != "b" || sa2[2] != "c" {
 		t.Fatalf("wrong servers for gid %v: %v\n", gid2, sa2)
 	}
-
+	fmt.Printf("Leave 1\n")
 	ck.Leave([]int{gid1})
 	check(t, []int{gid2}, ck)
 	cfa[4] = ck.Query(-1)
-
+	fmt.Printf("Duplicate leave 1\n")
 	ck.Leave([]int{gid1})
 	check(t, []int{gid2}, ck)
 	cfa[5] = ck.Query(-1)
@@ -141,13 +146,16 @@ func TestBasic(t *testing.T) {
 
 	fmt.Printf("Test: Move ...\n")
 	{
+		fmt.Printf("Join 503:3a,3b,3c\n")
 		var gid3 int = 503
 		ck.Join(map[int][]string{gid3: []string{"3a", "3b", "3c"}})
+		fmt.Printf("Join 504:4a,4b,4c\n")
 		var gid4 int = 504
 		ck.Join(map[int][]string{gid4: []string{"4a", "4b", "4c"}})
 		for i := 0; i < NShards; i++ {
 			cf := ck.Query(-1)
 			if i < NShards/2 {
+				fmt.Printf("Move %d %d\n",i,gid3)
 				ck.Move(i, gid3)
 				if cf.Shards[i] != gid3 {
 					cf1 := ck.Query(-1)
@@ -156,6 +164,7 @@ func TestBasic(t *testing.T) {
 					}
 				}
 			} else {
+				fmt.Printf("Move %d %d\n",i,gid4)
 				ck.Move(i, gid4)
 				if cf.Shards[i] != gid4 {
 					cf1 := ck.Query(-1)
@@ -193,13 +202,16 @@ func TestBasic(t *testing.T) {
 	}
 	gids := make([]int, npara)
 	ch := make(chan bool)
+	time.Sleep(1*time.Second)
 	for xi := 0; xi < npara; xi++ {
 		gids[xi] = int(xi + 1)
 		go func(i int) {
 			defer func() { ch <- true }()
 			var gid int = gids[i]
+			fmt.Printf("join %d,{a,b,c}\n",gid+1000)
 			cka[i].Join(map[int][]string{gid + 1000: []string{"a", "b", "c"}})
-			cka[i].Join(map[int][]string{gid: []string{"a", "b", "c"}})
+			fmt.Printf("join %d,{a,b,c}\n",gid)
+			cka[i].Join(map[int][]string{gid: []string{"a", "b", "c"}})//servers的名字相同并不会影响
 			cka[i].Leave([]int{gid + 1000})
 		}(xi)
 	}
@@ -210,7 +222,7 @@ func TestBasic(t *testing.T) {
 
 	fmt.Printf("  ... Passed\n")
 
-	fmt.Printf("Test: Minimal transfers after joins ...\n")
+	fmt.Printf("Test: Minimal transfers after joins ...\n")//确保在平衡过程中移动shards次数最小
 
 	c1 := ck.Query(-1)
 	for i := 0; i < 5; i++ {
@@ -264,6 +276,7 @@ func TestMulti(t *testing.T) {
 
 	var gid1 int = 1
 	var gid2 int = 2
+	fmt.Printf("join: 1:{x,y,z},2:{a,b,c}\n")
 	ck.Join(map[int][]string{
 		gid1: []string{"x", "y", "z"},
 		gid2: []string{"a", "b", "c"},
@@ -293,7 +306,8 @@ func TestMulti(t *testing.T) {
 	if len(sa3) != 3 || sa3[0] != "j" || sa3[1] != "k" || sa3[2] != "l" {
 		t.Fatalf("wrong servers for gid %v: %v\n", gid3, sa3)
 	}
-
+	time.Sleep(1*time.Second)
+	fmt.Printf("Leave 1,3\n")
 	ck.Leave([]int{gid1, gid3})
 	check(t, []int{gid2}, ck)
 	cfa[4] = ck.Query(-1)
@@ -326,6 +340,7 @@ func TestMulti(t *testing.T) {
 				gid + 1000: []string{"a", "b", "c"},
 				gid + 2000: []string{"a", "b", "c"},
 			})
+			fmt.Printf("leave %d,%d\n",gid+1000,gid+2000)
 			cka[i].Leave([]int{gid + 1000, gid + 2000})
 		}(xi)
 	}
@@ -354,7 +369,7 @@ func TestMulti(t *testing.T) {
 	}
 
 	fmt.Printf("  ... Passed\n")
-
+	time.Sleep(1*time.Second)
 	fmt.Printf("Test: Minimal transfers after multileaves ...\n")
 
 	var l []int

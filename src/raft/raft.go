@@ -101,7 +101,7 @@ func (rf *Raft) persist() {
 func (rf *Raft) readSnapshort(data []byte) { //byte字符类型
 	rf.readPersist(rf.persister.ReadRaftState())
 	if len(data) == 0 {
-		fmt.Printf("len(rf:%d's snapshot) == 0,return\n", rf.me)
+		//fmt.Printf("len(rf:%d's snapshot) == 0,return\n", rf.me)
 		return
 	}
 
@@ -111,10 +111,10 @@ func (rf *Raft) readSnapshort(data []byte) { //byte字符类型
 	d.Decode(&lastIncludeIndex) //相当于io.Reader,顺序要和Encoder对应好
 	d.Decode(&lastIncludeTerm)
 	rf.commitIndex = lastIncludeIndex
-	fmt.Printf("rf.commitIndex；%d,lastIncludeIndex；%d\n", rf.commitIndex, lastIncludeIndex)
+	//fmt.Printf("rf.commitIndex；%d,lastIncludeIndex；%d\n", rf.commitIndex, lastIncludeIndex)
 	rf.lastApplied = lastIncludeIndex
 	rf.log = truncateLog(lastIncludeIndex, lastIncludeTerm, rf.log)
-	fmt.Printf("rf:%d,Intinial with snapshot,lastIncludeIndex:%d, lastIncludeTerm:%d,rf.log:%v\n", rf.me, lastIncludeIndex, lastIncludeTerm, rf.log)
+	//fmt.Printf("rf:%d,Intinial with snapshot,lastIncludeIndex:%d, lastIncludeTerm:%d,rf.log:%v\n", rf.me, lastIncludeIndex, lastIncludeTerm, rf.log)
 	go func() {
 		rf.applyChan <- ApplyMsg{UseSnapshot: true, Snapshot: data}
 	}()
@@ -325,7 +325,7 @@ func (rf *Raft) StartSnapShot(snapshot []byte, index int) {
 		newEntries = append(newEntries, rf.log[i-baseIndex])
 	}
 	//newEntries=append(newEntries,rf.log[index-baseIndex+1:]...)
-	fmt.Printf("rf:%d,start snapshot, newEntries(term,cmd,index):%v\n", rf.me, newEntries)
+	//fmt.Printf("rf:%d,start snapshot, newEntries(term,cmd,index):%v\n", rf.me, newEntries)
 	rf.log = newEntries
 	rf.persist()
 	w := new(bytes.Buffer)
@@ -380,7 +380,7 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 	if rf.currentTerm > args.Term {
 		reply.Term = rf.currentTerm
 		reply.NextLogIndex = lastIndex + 1
-		//fmt.Printf("rf %v currentTerm: %v rejected append entries leader:%v, leaderTerm:%v\n", rf.me, rf.currentTerm, args.LeaderId, args.Term)
+		fmt.Printf("rf %v currentTerm: %v rejected append entries leader:%v, leaderTerm:%v\n", rf.me, rf.currentTerm, args.LeaderId, args.Term)
 		return
 	}
 	rf.heartBeatChan <- true
@@ -406,7 +406,7 @@ func (rf *Raft) AppendEntries(args *appendEntriesArgs, reply *appendEntriesReply
 						break
 					}
 				}
-				fmt.Printf("args.LastLogTerm:%v != term:%v,reply.NextLogIndex:%v\n", args.LastLogTerm, term, reply.NextLogIndex)
+				//fmt.Printf("args.LastLogTerm:%v != term:%v,reply.NextLogIndex:%v\n", args.LastLogTerm, term, reply.NextLogIndex)
 				return
 			}
 		}
@@ -434,15 +434,15 @@ func (rf *Raft) sendAppendEntries(severIndex int, args *appendEntriesArgs, reply
 	if ok {
 		term := rf.currentTerm
 		if rf.state != STATE_LEADER {
-			//fmt.Printf("%v send to %d failed, because rf's leader state changed\n", args.Entries, severIndex)
+			fmt.Printf("%v send to %d failed, because rf's leader state changed\n", args.Entries, severIndex)
 			return ok
 		}
 		if term != args.Term { //在appendEntries中(leader)args.Term>(candidate)term则term=args.Term,这里只会是(leader)args.Term<(candidate)term
-			//fmt.Printf("%v send to %d,fail in 2\n", args.Entries, severIndex)
+			fmt.Printf("%v send to %d,fail in 2\n", args.Entries, severIndex)
 			return ok
 		}
 		if reply.Term > rf.currentTerm { //(leader)args.Term<(candidate)term
-			//fmt.Printf("%v send to %d failed, because reply.term>rf.current.term, %d will change into follower from leader\n", args.Entries, severIndex, rf.me)
+			fmt.Printf("%v send to %d failed, because reply.term>rf.current.term, %d will change into follower from leader\n", args.Entries, severIndex, rf.me)
 			rf.currentTerm = reply.Term
 			rf.state = STATE_FOLLOWER
 			rf.voteFor = -1
@@ -490,7 +490,7 @@ func (rf *Raft) InstallSnapshot(args snapShortArgs, reply *snapShortReply) { //�
 		reply.Term = rf.currentTerm
 		return
 	}
-	fmt.Printf("Rf:%d,install snapshot\n", rf.me)
+	//fmt.Printf("Rf:%d,install snapshot\n", rf.me)
 	rf.heartBeatChan <- true
 	rf.state = STATE_FOLLOWER
 	rf.persister.SaveSnapshot(args.Data)
@@ -597,6 +597,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.readPersist(persister.ReadRaftState())
 
 	rf.readSnapshort(persister.ReadSnapshot())
+	fmt.Printf("Rf %d launch\n",rf.me)
 	go func() {
 		for {
 			switch rf.state {
@@ -618,7 +619,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 				select {
 				case <-time.After(time.Duration(rand.Int63()%333+550) * time.Millisecond):
 				case <-rf.heartBeatChan: //心跳并不会影响纪元
-					//fmt.Printf("Candidate %d receive heartBeatChan, state change into follower\n", rf.me)
+					fmt.Printf("Candidate %d receive heartBeatChan, state change into follower\n", rf.me)
 					rf.state = STATE_FOLLOWER
 				case <-rf.leaderChan:
 					rf.mu.Lock()

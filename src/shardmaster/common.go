@@ -27,7 +27,7 @@ const NShards = 10
 // Please don't change this.
 type Config struct {
 	Num    int              // config number
-	Shards [NShards]int     // shard -> gid
+	Shards [NShards]int     // shard -> gid，初始化为【0 0 0 0 0 0 0 0 0 0】
 	Groups map[int][]string // gid -> servers[]
 }
 
@@ -39,6 +39,8 @@ type Err string
 
 type JoinArgs struct {
 	Servers map[int][]string // new GID -> servers mappings
+	ReqId int
+	ClientId int64
 }
 
 type JoinReply struct {
@@ -48,6 +50,8 @@ type JoinReply struct {
 
 type LeaveArgs struct {
 	GIDs []int
+	ClientId int64
+	ReqId int
 }
 
 type LeaveReply struct {
@@ -58,6 +62,8 @@ type LeaveReply struct {
 type MoveArgs struct {
 	Shard int
 	GID   int
+	ClientId int64
+	ReqId int
 }
 
 type MoveReply struct {
@@ -67,6 +73,8 @@ type MoveReply struct {
 
 type QueryArgs struct {
 	Num int // desired config number
+	ClientId int64
+	ReqId int
 }
 
 type QueryReply struct {
