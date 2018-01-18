@@ -5,14 +5,14 @@ import "labrpc"
 import "sync"
 import (
 	"encoding/gob"
-	"time"
-	"runtime/debug"
-	"os"
-	"log"
 	"fmt"
+	"log"
+	"os"
+	"runtime/debug"
+	"time"
 )
 
-const Debug = 1
+const Debug = 0
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
 	if Debug > 0 {
@@ -70,9 +70,9 @@ func (sm *ShardMaster) WaitForApply(index int) (Result, bool) {
 	sm.mu.Unlock()
 
 	select {
-	case result := <-resultChan://返回的是leader的config结果
+	case result := <-resultChan: //返回的是leader的config结果
 		return result, true
-	case <-time.After(time.Second * 1)://正常情况下1s内就可以完成
+	case <-time.After(time.Second * 1): //正常情况下1s内就可以完成
 		return Result{}, false
 	}
 }
@@ -193,10 +193,10 @@ func (sm *ShardMaster) Raft() *raft.Raft {
 func (sm *ShardMaster) Init() {
 	sm.current = 0
 	sm.ack = make(map[int64]int)
-	sm.results = make(map[int]chan Result,1)
+	sm.results = make(map[int]chan Result, 1)
 }
 
-func (sm *ShardMaster) IsDuplicated(clientId int64, reqId int) bool {//检测是否执行过这个commit
+func (sm *ShardMaster) IsDuplicated(clientId int64, reqId int) bool { //检测是否执行过这个commit
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -255,18 +255,18 @@ func (sm *ShardMaster) ApplyOp(op Op, isDuplicated bool) interface{} {
 func (sm *ShardMaster) ApplyJoin(args JoinArgs) {
 	cfg := sm.NextConfig()
 	needRebalance := false
-	gids := make([]int, 0)//存储本次参数中join的gid
-	fmt.Printf("sm %d Before join cfg.group:%v\n",sm.me,cfg.Groups)
-	for gid, servers := range args.Servers {//把参数中的server join到对应的gid
-		if _, exists := cfg.Groups[gid]; !exists {//只要gid不同，统统插入,有时候会因为group太多导致新插入的group并没有对应的shard
+	gids := make([]int, 0) //存储本次参数中join的gid
+	fmt.Printf("sm %d Before join cfg.group:%v\n", sm.me, cfg.Groups)
+	for gid, servers := range args.Servers { //把参数中的server join到对应的gid
+		if _, exists := cfg.Groups[gid]; !exists { //只要gid不同，统统插入,有时候会因为group太多导致新插入的group并没有对应的shard
 			cfg.Groups[gid] = servers
 			needRebalance = true
 			gids = append(gids, gid)
 		}
 	}
-	fmt.Printf("sm %d After join cfg.group:%v\n",sm.me,cfg.Groups)
+	fmt.Printf("sm %d After join cfg.group:%v\n", sm.me, cfg.Groups)
 	if needRebalance {
-		DPrintln(sm.me,"need rebalance!")
+		DPrintln(sm.me, "need rebalance!")
 		sm.Rebalance(cfg, OP_JOIN, gids)
 	}
 }
@@ -291,7 +291,7 @@ func (sm *ShardMaster) ApplyLeave(args LeaveArgs) {
 	}
 }
 
-func (sm *ShardMaster) ApplyMove(args MoveArgs) {//更改shards中shard和gid的对应关系
+func (sm *ShardMaster) ApplyMove(args MoveArgs) { //更改shards中shard和gid的对应关系
 	cfg := sm.NextConfig()
 	cfg.Shards[args.Shard] = args.GID
 }
@@ -309,16 +309,16 @@ func (sm *ShardMaster) NextConfig() *Config {
 	return &sm.configs[sm.current]
 }
 
-func (sm *ShardMaster) GetMinGidByShards(shardsCount map[int][]int) (int,int) {
+func (sm *ShardMaster) GetMinGidByShards(shardsCount map[int][]int) (int, int) {
 	min := -1
 	var gid int
 	for k, v := range shardsCount {
 		if min == -1 || min > len(v) {
-			min = len(v)//该group拥有的shard个数
+			min = len(v) //该group拥有的shard个数
 			gid = k
 		}
 	}
-	return gid,min
+	return gid, min
 }
 
 func (sm *ShardMaster) GetMaxGidByShards(shardsCount map[int][]int) int {
@@ -333,26 +333,26 @@ func (sm *ShardMaster) GetMaxGidByShards(shardsCount map[int][]int) int {
 	return gid
 }
 
-func GetGidCounts(c *Config) (int, int){
-	min_id, min_num, max_id, max_num := int(0),999,int(0),-1
+func GetGidCounts(c *Config) (int, int) {
+	min_id, min_num, max_id, max_num := int(0), 999, int(0), -1
 	counts := map[int]int{}
-	for g := range c.Groups{
+	for g := range c.Groups {
 		counts[g] = 0
 	}
-	for _, g := range c.Shards{
+	for _, g := range c.Shards {
 		counts[g]++
 	}
-	for g := range counts{
+	for g := range counts {
 		_, exists := c.Groups[g]
-		if exists && min_num > counts[g]{
+		if exists && min_num > counts[g] {
 			min_id, min_num = g, counts[g]
 		}
-		if exists && max_num < counts[g]{
+		if exists && max_num < counts[g] {
 			max_id, max_num = g, counts[g]
 		}
 	}
-	for _, g := range c.Shards{
-		if g == 0{
+	for _, g := range c.Shards {
+		if g == 0 {
 			max_id = 0
 		}
 	}
@@ -360,108 +360,78 @@ func GetGidCounts(c *Config) (int, int){
 }
 
 func (sm *ShardMaster) CountShards(cfg *Config) map[int][]int {
-	shardsCount := map[int][]int{}//相当于shardCount:=make(map[int][]int),这样声明是指该map没有容量上限，map不能使用new声明
+	shardsCount := map[int][]int{} //相当于shardCount:=make(map[int][]int),这样声明是指该map没有容量上限，map不能使用new声明
 	for k := range cfg.Groups {
 		shardsCount[k] = []int{}
 	}
-	fmt.Printf("cfg.shard:%v\n",cfg.Shards)
 	for k, v := range cfg.Shards {
 		shardsCount[v] = append(shardsCount[v], k)
 	}
 	return shardsCount
 }
 
-func GetShardByGid(gid int, c *Config) int{
-	for s, g := range c.Shards{
-		if g == gid{
+func GetShardByGid(gid int, c *Config) int {
+	for s, g := range c.Shards {
+		if g == gid {
 			return s
 		}
 	}
 	return -1
 }
-//func (sm *ShardMaster) Rebalance(cfg *Config, opType string, gids []int){
-//	for _,gid:=range gids{
-//		for i := 0; ; i++{
-//
-//			if opType==OP_LEAVE{
-//				min_id, _ := GetGidCounts(cfg)
-//				fmt.Printf("Before leave gid:%v,cfg.shards:%v\n",gid,cfg.Shards)
-//				s := GetShardByGid(gid, cfg)
-//
-//				if s == -1{
-//					break
-//				}
-//				cfg.Shards[s] = min_id
-//				fmt.Printf("min_id:%d,s:%d,After leave gid:%v,cfg.shards:%v\n",min_id,s,gid,cfg.Shards)
-//			} else{
-//				_, max_id := GetGidCounts(cfg)
-//				if i == NShards / len(cfg.Groups){
-//					break
-//				}
-//				s := GetShardByGid(max_id, cfg)
-//				cfg.Shards[s] = gid
-//				fmt.Printf("After join gid:%v,cfg.shards:%v\n",gid,cfg.Shards)
-//			}
-//		}
-//	}
-//
-//}
 
 func (sm *ShardMaster) Rebalance(cfg *Config, opType string, gids []int) {
-	counts := sm.CountShards(cfg)//生成一个gid->shard的map
-	fmt.Printf("before balance counts:%v\n",counts)
+	counts := sm.CountShards(cfg) //生成一个gid->shard的map
+	//fmt.Printf("before balance counts:%v\n",counts)
 	switch opType {
 	case OP_JOIN:
-		meanNum := NShards / len(cfg.Groups)//一共10个shard
-		for _,gid := range gids {
-			for i:=0; i < meanNum; i++ {
+		meanNum := NShards / len(cfg.Groups) //一共10个shard
+		for _, gid := range gids {
+			for i := 0; i < meanNum; i++ {
 				maxGid := sm.GetMaxGidByShards(counts)
 				cfg.Shards[counts[maxGid][0]] = gid
-				counts[maxGid] = counts[maxGid][1:]//因为counts[maxGid][0]已经重新分配了
+				counts[maxGid] = counts[maxGid][1:] //因为counts[maxGid][0]已经重新分配了
 			}
 		}
-		fmt.Printf("cfg.shard:%v\n",cfg.Shards)
-		if cfg.Num == 1 {//初始化
+		if cfg.Num == 1 { //初始化
 			for i := 0; i < NShards; i++ {
 				if cfg.Shards[i] == 0 {
-					minGid,_ := sm.GetMinGidByShards(counts)
+					minGid, _ := sm.GetMinGidByShards(counts)
 					cfg.Shards[i] = minGid
-					counts[minGid] = append(counts[minGid],i)
+					counts[minGid] = append(counts[minGid], i)
 				}
 			}
-			fmt.Printf("cfg.shard:%v,counts:%v\n",cfg.Shards,counts)
 		}
-		fmt.Printf("after balance counts:%v\n",counts)
+		fmt.Printf("after balance shard:%v\n", cfg.Shards)
 	case OP_LEAVE:
 		shards := make([]int, 0)
 		for _, gid := range gids {
-			shards = append(shards, counts[gid]...)//shards存储的是要删除的gid在cfg.Shards中的索引值
-			delete(counts, gid)//key和value都会删除
+			shards = append(shards, counts[gid]...) //shards存储的是要删除的gid在cfg.Shards中的索引值
+			delete(counts, gid)                     //key和value都会删除
 		}
-		fmt.Printf("sm %d, counts:%v\n",sm.me,counts)
+		//fmt.Printf("sm %d, counts:%v\n",sm.me,counts)
 		for _, shard := range shards {
-			minGid,_ := sm.GetMinGidByShards(counts)
-			fmt.Printf("shard:%d, minGid:%d\n",shard,minGid)
+			minGid, _ := sm.GetMinGidByShards(counts)
+			//fmt.Printf("shard:%d, minGid:%d\n",shard,minGid)
 			cfg.Shards[shard] = minGid
 			counts[minGid] = append(counts[minGid], shard)
 		}
-		_,minLength:=sm.GetMinGidByShards(counts)
-		if (len(cfg.Groups)-len(gids))>0{
-			times:=NShards /(len(cfg.Groups)-len(gids))
-			if minLength<times{
-				time.Sleep(1*time.Second)
-				fmt.Printf("Before rebalance cfg.shrads:%v,counts:%v\n",cfg.Shards,counts)
+		_, minLength := sm.GetMinGidByShards(counts)
+		if (len(cfg.Groups) - len(gids)) > 0 {
+			times := NShards / (len(cfg.Groups) - len(gids))
+			if minLength < times {
+				time.Sleep(1 * time.Second)
+				fmt.Printf("Before rebalance cfg.shrads:%v,counts:%v\n", cfg.Shards, counts)
 				maxGid := sm.GetMaxGidByShards(counts)
 
-				deleteShard:= make([]int, 0)
+				deleteShard := make([]int, 0)
 				deleteShard = append(deleteShard, counts[maxGid]...)
 				delete(counts, maxGid)
-				fmt.Printf("maxGid:%v,deleteShard:%v\n",maxGid,deleteShard)
-				for i := 0; i < times; i++{
-					minGid,_ := sm.GetMinGidByShards(counts)
+				fmt.Printf("maxGid:%v,deleteShard:%v\n", maxGid, deleteShard)
+				for i := 0; i < times; i++ {
+					minGid, _ := sm.GetMinGidByShards(counts)
 					cfg.Shards[deleteShard[i]] = minGid
 					counts[minGid] = append(counts[minGid], deleteShard[i])
-					fmt.Printf("cfg.Shards:%v,count:%v\n",cfg.Shards,counts)
+					fmt.Printf("cfg.Shards:%v,count:%v\n", cfg.Shards, counts)
 				}
 			}
 		}
@@ -552,7 +522,7 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister)
 	sm.configs = make([]Config, 1)
 	sm.configs[0].Groups = map[int][]string{}
 
-	gob.Register(Op{})//用于声明用到的interface{}中可能是JoinArgs{}类型
+	gob.Register(Op{}) //用于声明用到的interface{}中可能是JoinArgs{}类型
 	gob.Register(JoinArgs{})
 	gob.Register(LeaveArgs{})
 	gob.Register(MoveArgs{})

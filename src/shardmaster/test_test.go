@@ -38,7 +38,7 @@ func check(t *testing.T, groups []int, ck *Clerk) {
 	// more or less balanced sharding?
 	counts := map[int]int{}
 	for _, g := range c.Shards {
-		counts[g] += 1//key为gid，value为该gid所包含的shard数
+		counts[g] += 1 //key为gid，value为该gid所包含的shard数
 	}
 	min := 257
 	max := 0
@@ -50,8 +50,8 @@ func check(t *testing.T, groups []int, ck *Clerk) {
 			min = counts[g]
 		}
 	}
-	if max > min+1 {//balance的结果相当于保证每个group中的shard数相差不超过一
-		t.Fatalf("c.shards:%v,max %v too much larger than min %v,counts:%v,c.group:%v", c.Shards,max, min,counts,c.Groups)
+	if max > min+1 { //balance的结果相当于保证每个group中的shard数相差不超过一
+		t.Fatalf("c.shards:%v,max %v too much larger than min %v,counts:%v,c.group:%v", c.Shards, max, min, counts, c.Groups)
 	}
 }
 
@@ -82,7 +82,7 @@ func check_same_config(t *testing.T, c1 Config, c2 Config) {
 
 func TestBasic(t *testing.T) {
 	const nservers = 3
-	cfg := make_config(t, nservers, false)//创建了nservers个raft作为master shard但是没有group
+	cfg := make_config(t, nservers, false) //创建了nservers个raft作为master shard但是没有group
 	defer cfg.cleanup()
 
 	ck := cfg.makeClient(cfg.All())
@@ -91,8 +91,8 @@ func TestBasic(t *testing.T) {
 
 	cfa := make([]Config, 6)
 	fmt.Printf("Query -1\n")
-	cfa[0] = ck.Query(-1)//对应着sm.config的key
-	
+	cfa[0] = ck.Query(-1) //对应着sm.config的key
+
 	check(t, []int{}, ck)
 
 	var gid1 int = 1
@@ -133,7 +133,7 @@ func TestBasic(t *testing.T) {
 	fmt.Printf("Test: Historical queries ...\n")
 
 	for s := 0; s < nservers; s++ {
-		cfg.ShutdownServer(s)
+		cfg.ShutdownServer(s) //只关闭一台server并不会影响结果
 		for i := 0; i < len(cfa); i++ {
 			c := ck.Query(cfa[i].Num)
 			check_same_config(t, c, cfa[i])
@@ -155,7 +155,7 @@ func TestBasic(t *testing.T) {
 		for i := 0; i < NShards; i++ {
 			cf := ck.Query(-1)
 			if i < NShards/2 {
-				fmt.Printf("Move %d %d\n",i,gid3)
+				fmt.Printf("Move %d %d\n", i, gid3)
 				ck.Move(i, gid3)
 				if cf.Shards[i] != gid3 {
 					cf1 := ck.Query(-1)
@@ -164,7 +164,7 @@ func TestBasic(t *testing.T) {
 					}
 				}
 			} else {
-				fmt.Printf("Move %d %d\n",i,gid4)
+				fmt.Printf("Move %d %d\n", i, gid4)
 				ck.Move(i, gid4)
 				if cf.Shards[i] != gid4 {
 					cf1 := ck.Query(-1)
@@ -202,16 +202,16 @@ func TestBasic(t *testing.T) {
 	}
 	gids := make([]int, npara)
 	ch := make(chan bool)
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	for xi := 0; xi < npara; xi++ {
 		gids[xi] = int(xi + 1)
 		go func(i int) {
 			defer func() { ch <- true }()
 			var gid int = gids[i]
-			fmt.Printf("join %d,{a,b,c}\n",gid+1000)
+			fmt.Printf("join %d,{a,b,c}\n", gid+1000)
 			cka[i].Join(map[int][]string{gid + 1000: []string{"a", "b", "c"}})
-			fmt.Printf("join %d,{a,b,c}\n",gid)
-			cka[i].Join(map[int][]string{gid: []string{"a", "b", "c"}})//servers的名字相同并不会影响
+			fmt.Printf("join %d,{a,b,c}\n", gid)
+			cka[i].Join(map[int][]string{gid: []string{"a", "b", "c"}}) //servers的名字相同并不会影响
 			cka[i].Leave([]int{gid + 1000})
 		}(xi)
 	}
@@ -222,7 +222,7 @@ func TestBasic(t *testing.T) {
 
 	fmt.Printf("  ... Passed\n")
 
-	fmt.Printf("Test: Minimal transfers after joins ...\n")//确保在平衡过程中移动shards次数最小
+	fmt.Printf("Test: Minimal transfers after joins ...\n") //确保在平衡过程中移动shards次数最小
 
 	c1 := ck.Query(-1)
 	for i := 0; i < 5; i++ {
@@ -306,7 +306,7 @@ func TestMulti(t *testing.T) {
 	if len(sa3) != 3 || sa3[0] != "j" || sa3[1] != "k" || sa3[2] != "l" {
 		t.Fatalf("wrong servers for gid %v: %v\n", gid3, sa3)
 	}
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	fmt.Printf("Leave 1,3\n")
 	ck.Leave([]int{gid1, gid3})
 	check(t, []int{gid2}, ck)
@@ -340,7 +340,7 @@ func TestMulti(t *testing.T) {
 				gid + 1000: []string{"a", "b", "c"},
 				gid + 2000: []string{"a", "b", "c"},
 			})
-			fmt.Printf("leave %d,%d\n",gid+1000,gid+2000)
+			fmt.Printf("leave %d,%d\n", gid+1000, gid+2000)
 			cka[i].Leave([]int{gid + 1000, gid + 2000})
 		}(xi)
 	}
@@ -369,7 +369,7 @@ func TestMulti(t *testing.T) {
 	}
 
 	fmt.Printf("  ... Passed\n")
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	fmt.Printf("Test: Minimal transfers after multileaves ...\n")
 
 	var l []int

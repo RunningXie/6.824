@@ -93,20 +93,25 @@ type Item struct {
 
 func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 	defer func() {
-		fmt.Printf("[%d-%d]: Get args: %v, reply: %v. (shard: %d)\n", kv.gid, kv.me, args, reply, key2shard(args.Key))
+		DPrintf("[%d-%d]: Get args: %v, reply: %v. (shard: %d)\n", kv.gid, kv.me, args, reply, key2shard(args.Key))
 	}()
+	fmt.Printf("shardKv server %v get args:%v\n", kv.me, args)
 	// Your code here.
 	// not leader ?
 	if _, isLeader := kv.rf.GetState(); !isLeader {
+		fmt.Printf("first wrong leader\n")
 		reply.WrongLeader = true
 		reply.Err = ""
 
 		return
 	}
+
+	//DPrintf("[%d-%d]: leader %d receive rpc: Get(%q).\n", kv.gid, kv.me, kv.me, args.Key)
 	shard := key2shard(args.Key)
 	// not responsible for key?
 	kv.mu.Lock()
 	if kv.configs[0].Shards[shard] != kv.gid {
+		fmt.Printf("first wrong group\n")
 		kv.mu.Unlock()
 
 		reply.Err = ErrWrongGroup
@@ -116,11 +121,13 @@ func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 	// if responsible, check whether already receive data from previous owner
 	cur := kv.configs[0].Num
 	if work, ok := kv.workList[cur]; ok {
+		fmt.Printf("if work, ok := kv.workList[cur]; ok {\n")
 		recFrom := work.RecFrom
 		for _, item := range recFrom {
+			fmt.Printf("for _, item := range recFrom {\n")
 			// still waiting data? postpone client request
 			if shard == item.Shard {
-				fmt.Printf("[%d-%d]: Migrate unfinished: postpone client request, still waiting data.\n", kv.gid, kv.me)
+				fmt.Printf("[%d-%d]: Get rpc: postpone client request, still waiting data.\n", kv.gid, kv.me)
 				kv.mu.Unlock()
 				reply.Err = ErrWrongGroup
 
@@ -131,19 +138,21 @@ func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 
 	// duplicate put/append request
 	if dup, ok := kv.duplicate[args.ClientID]; ok {
+		fmt.Printf("if dup, ok := kv.duplicate[args.ClientID]; ok {\n")
 		// filter duplicate
 		if args.SeqNo <= dup.Seq {
 			fmt.Printf("[%d-%d]: Get rpc: duplicate request: %d - %d.\n", kv.gid, kv.me, args.SeqNo, dup.Seq)
 			kv.mu.Unlock()
 			reply.WrongLeader = false
 			reply.Err = OK
-			reply.Value = dup.Reply.Value //遇到重复提交直接把kv.duplicate中保存的结果返回
+			reply.Value = dup.Reply.Value
 
 			return
 		}
 	}
 
 	cmd := Op{Key: args.Key, Op: "Get", ClientID: args.ClientID, SeqNo: args.SeqNo}
+	fmt.Printf("shardkv send get to raft\n")
 	index, term, _ := kv.rf.Start(cmd)
 
 	ch := make(chan Err)
@@ -184,7 +193,7 @@ func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 
 func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 	defer func() {
-		fmt.Printf("[%d-%d]: PutAppend args: %v, reply: %v. (shard: %d)\n", kv.gid, kv.me, args, reply,
+		DPrintf("[%d-%d]: PutAppend args: %v, reply: %v. (shard: %d)\n", kv.gid, kv.me, args, reply,
 			key2shard(args.Key))
 	}()
 
@@ -195,6 +204,9 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 		reply.Err = ""
 		return
 	}
+
+	//DPrintf("[%d-%d]: leader %d receive rpc: PutAppend(%q => (%q,%q), (%d-%d).\n", kv.gid, kv.me, kv.me,
+	//	args.Op, args.Key, args.Value, args.ClientID, args.SeqNo)
 	shard := key2shard(args.Key)
 	// not responsible for key?
 	kv.mu.Lock()
@@ -213,7 +225,7 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 			if shard == item.Shard {
 				kv.mu.Unlock()
 				// postpone client
-				fmt.Printf("[%d-%d]: PutAppend rpc: postpone client request, still waiting data.\n", kv.gid, kv.me)
+				DPrintf("[%d-%d]: PutAppend rpc: postpone client request, still waiting data.\n", kv.gid, kv.me)
 				reply.Err = ErrWrongGroup
 				return
 			}
@@ -226,7 +238,7 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 			kv.mu.Unlock()
 			reply.WrongLeader = false
 			reply.Err = OK
-			fmt.Printf("[%d-%d]: PutAppend rpc: duplicate request: %d - %d.\n", kv.gid, kv.me, args.SeqNo, dup.Seq)
+			DPrintf("[%d-%d]: PutAppend rpc: duplicate request: %d - %d.\n", kv.gid, kv.me, args.SeqNo, dup.Seq)
 			return
 		}
 	}
@@ -252,6 +264,7 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 			return
 		}
 		reply.Err = err
+		DPrintf("err:%v\n", err)
 	case <-kv.shutdownCh:
 		return
 	}
@@ -259,11 +272,11 @@ func (kv *ShardKV) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 
 // Migrate Configuration
 func (kv *ShardKV) Migrate(args *MigrateArgs, reply *MigrateReply) {
-
 	defer func() {
-		fmt.Printf("[%d-%d]: request Migrate, args(worklist num,gid,shard): %v, reply wrong leader: %t, reply err: %q, db: %v.\n", kv.gid, kv.me, args,
+		DPrintf("[%d-%d]: request Migrate, args: %v, reply: %t, %q, db: %v.\n", kv.gid, kv.me, args,
 			reply.WrongLeader, reply.Err, reply.Data)
 	}()
+
 	// not leader?
 	if _, isLeader := kv.rf.GetState(); !isLeader {
 		reply.WrongLeader = true
@@ -292,7 +305,7 @@ func (kv *ShardKV) Migrate(args *MigrateArgs, reply *MigrateReply) {
 // GC RPC: called by other group to notify cleaning up unnecessary Shards
 func (kv *ShardKV) CleanUp(args *CleanUpArgs, reply *CleanUpReply) {
 	defer func() {
-		fmt.Printf("[%d-%d]: request CleanUp, args(kv.config num,shard,gid): %v, reply: %v.\n", kv.gid, kv.me, args, reply)
+		DPrintf("[%d-%d]: request CleanUp, args: %v, reply: %v.\n", kv.gid, kv.me, args, reply)
 	}()
 
 	// not leader?
@@ -321,15 +334,15 @@ func (kv *ShardKV) CleanUp(args *CleanUpArgs, reply *CleanUpReply) {
 }
 
 // should be called when holding the lock
-func (kv *ShardKV) applyMigratedData(mig Mig) { //worklist为空完成迁移
+func (kv *ShardKV) applyMigratedData(mig Mig) {
 	defer func() {
-		fmt.Printf("[%d-%d]: kv.workList(recfrom(shard,gid),last config): %v\n", kv.gid, kv.me, kv.workList)
+		DPrintf("[%d-%d]: kv.workList: %v\n", kv.gid, kv.me, kv.workList)
 	}()
 
 	// update data
 	for k, v := range mig.Data {
 		if key2shard(k) == mig.Shard {
-			kv.db[k] = v //基于新的shard更改kv.db
+			kv.db[k] = v
 		}
 	}
 	// update duplicate table
@@ -380,10 +393,10 @@ func (kv *ShardKV) applyMigratedData(mig Mig) { //worklist为空完成迁移
 func (kv *ShardKV) shardGC(args CleanUp) {
 	for k := range kv.db {
 		if shard := key2shard(k); shard == args.Shard {
-			delete(kv.db, k) //删除掉因为shard变动不属于该shard的db内容
+			delete(kv.db, k)
 		}
 	}
-	fmt.Printf("[%d-%d]: server %d fininshed gc, shard: %d @ config: %d, from gid: %d\n",
+	DPrintf("[%d-%d]: server %d has gc shard: %d @ config: %d, from gid: %d\n",
 		kv.gid, kv.me, kv.me, args.Shard, args.Num, args.Gid)
 }
 
@@ -424,7 +437,7 @@ func (kv *ShardKV) applyDaemon() {
 						// switch to new config already?
 						shard := key2shard(cmd.Key)
 						if kv.configs[0].Shards[shard] != kv.gid {
-							fmt.Printf("[%d-%d]: server %d (gid: %d) has switched to new config %d, "+
+							DPrintf("[%d-%d]: server %d (gid: %d) has switched to new config %d, "+
 								"no responsibility for shard %d\n",
 								kv.gid, kv.me, kv.me, kv.gid, kv.configs[0].Num, shard)
 							err = ErrWrongGroup
@@ -436,13 +449,13 @@ func (kv *ShardKV) applyDaemon() {
 								kv.duplicate[cmd.ClientID] = &LatestReply{Seq: cmd.SeqNo,
 									Reply: GetReply{Value: kv.db[cmd.Key]}}
 							case "Put":
-								kv.db[cmd.Key] = cmd.Value //kv.db的key对应着shard索引，直接把原来的内容替换掉
+								kv.db[cmd.Key] = cmd.Value //kv.db的key对应着shard索引
 								kv.duplicate[cmd.ClientID] = &LatestReply{Seq: cmd.SeqNo}
 							case "Append":
 								kv.db[cmd.Key] += cmd.Value
 								kv.duplicate[cmd.ClientID] = &LatestReply{Seq: cmd.SeqNo}
 							default:
-								fmt.Printf("[%d-%d]: server %d receive invalid cmd: %v\n", kv.gid, kv.me, kv.me, cmd)
+								DPrintf("[%d-%d]: server %d receive invalid cmd: %v\n", kv.gid, kv.me, kv.me, cmd)
 								panic("invalid command operation")
 							}
 						}
@@ -465,7 +478,7 @@ func (kv *ShardKV) applyDaemon() {
 								kv.gcHistory[cmd.Shard] = kv.configs[0].Num
 							}
 						} else {
-							fmt.Printf("[%d-%d]: server %d, shard: %d, config: %d - %d, gc history: %d\n",
+							DPrintf("[%d-%d]: server %d, shard: %d, config: %d - %d, gc history: %d\n",
 								kv.gid, kv.me, kv.me, cmd.Shard, cmd.Num, kv.configs[0].Num, kv.gcHistory[cmd.Shard])
 						}
 					default:
@@ -475,7 +488,7 @@ func (kv *ShardKV) applyDaemon() {
 					if needSnapshot(kv) {
 						// save snapshot and notify raft
 						kv.generateSnapshot(msg.Index)
-						kv.rf.NewSnapshot(msg.Index)
+						kv.rf.NewSnapShot(msg.Index)
 					}
 					// notify channel
 					if notifyCh, ok := kv.notifyChs[msg.Index]; ok && notifyCh != nil {
@@ -486,7 +499,7 @@ func (kv *ShardKV) applyDaemon() {
 				}
 			}
 		case <-kv.shutdownCh:
-			fmt.Printf("[%d-%d]: server %d is shutting down.\n", kv.gid, kv.me, kv.me)
+			DPrintf("[%d-%d]: server %d is shutting down.\n", kv.gid, kv.me, kv.me)
 			return
 		}
 	}
@@ -525,7 +538,7 @@ func (kv *ShardKV) generateSnapshot(index int) []byte {
 	data := w.Bytes()
 	kv.persist.SaveSnapshot(data)
 
-	fmt.Printf("[%d-%d]: server %d generate snapshot (configs: %v, worklist: %v).\n",
+	DPrintf("[%d-%d]: server %d generate snapshot (configs: %v, worklist: %v).\n",
 		kv.gid, kv.me, kv.me, kv.configs, kv.workList)
 	return data
 }
@@ -547,7 +560,7 @@ func (kv *ShardKV) readSnapshot(data []byte) {
 	d.Decode(&kv.workList)
 	d.Decode(&kv.gcHistory)
 
-	fmt.Printf("[%d-%d]: server %d read snapshot (configs: %v, worklist: %v).\n",
+	DPrintf("[%d-%d]: server %d read snapshot (configs: %v, worklist: %v).\n",
 		kv.gid, kv.me, kv.me, kv.configs, kv.workList)
 
 	// if snapshot occurs in middle of migration
@@ -562,13 +575,14 @@ func (kv *ShardKV) switchConfig(new *shardmaster.Config) {
 	var old = &kv.configs[0]
 	kv.generateWorkList(old, new)
 
-	fmt.Printf("[%d-%d]: server %d switch to new config (%d->%d, shards: %v, workList: %v, configs: %v).\n",
+	DPrintf("[%d-%d]: server %d switch to new config (%d->%d, shards: %v, workList: %v, configs: %v).\n",
 		kv.gid, kv.me, kv.me, kv.configs[0].Num, new.Num, new.Shards, kv.workList[new.Num], len(kv.configs))
 
 	if len(kv.configs) > 2 { //正常情况下len(kv.configs)==2，保存了一新一旧
 		log.Println(new.Num, kv.configs)
 		panic("len(kv.configs) > 2")
 	}
+	DPrintf("len(kv.configs) =%d\n", len(kv.configs))
 	// for all server: switch to new config
 	if len(kv.configs) == 1 {
 		kv.configs[0] = *new
@@ -581,7 +595,7 @@ func (kv *ShardKV) switchConfig(new *shardmaster.Config) {
 
 	}
 
-	// for leader,follower直接替换config
+	// for leader
 	if _, isLeader := kv.rf.GetState(); isLeader {
 		if work, ok := kv.workList[new.Num]; ok && len(work.RecFrom) > 0 {
 			// safe point to copy data and dup
@@ -631,9 +645,9 @@ func (kv *ShardKV) requestShards(old *shardmaster.Config, num int) {
 		// still at current config Num and migrate not done? if not, ignore reply data
 		if reply.Num == kv.configs[0].Num && !kv.isMigrateDone("replyHandler") {
 			var mig = Mig{Num: reply.Num, Shard: reply.Shard, Gid: reply.Gid, Data: reply.Data, Dup: reply.Dup}
-			kv.rf.Start(mig) //leader需要更新config时需要向底层raft申请迁移
+			kv.rf.Start(mig)
 
-			fmt.Printf("[%d-%d]: leader %d receive shard: %d, from: %d.\n", kv.gid, kv.me, kv.me,
+			DPrintf("[%d-%d]: leader %d receive shard: %d, from: %d).\n", kv.gid, kv.me, kv.me,
 				reply.Shard, reply.Gid)
 		}
 	}
@@ -679,7 +693,7 @@ func (kv *ShardKV) requestCleanUp(shard, gid int, config *shardmaster.Config) {
 		Gid:   kv.gid,
 	}
 
-	fmt.Printf("[%d-%d]: leader %d issue cleanup shard: %d, gid: %d.\n", kv.gid, kv.me, kv.me, shard, gid)
+	DPrintf("[%d-%d]: leader %d issue cleanup shard: %d, gid: %d).\n", kv.gid, kv.me, kv.me, shard, gid)
 
 	for {
 		// shutdown?
@@ -695,7 +709,7 @@ func (kv *ShardKV) requestCleanUp(shard, gid int, config *shardmaster.Config) {
 		if servers, ok := config.Groups[gid]; ok {
 			// try each server for the shard.
 			for si := 0; si < len(servers); si++ {
-				srv := kv.make_end(servers[si]) //将服务器的名字转化为一个 labrpc.ClientEnd
+				srv := kv.make_end(servers[si])
 
 				var reply CleanUpReply
 				ok := srv.Call("ShardKV.CleanUp", args, &reply)
@@ -732,7 +746,7 @@ func (kv *ShardKV) generateWorkList(old, new *shardmaster.Config) {
 		}
 	}
 	if len(recFrom) != 0 {
-		fmt.Printf("oldconfig:%v,newConfig:%v,receFrom:%v\n", old, new, recFrom) //recFrom中存储着需要gc的shard
+		DPrintf("oldconfig:%v,newConfig:%v,receFrom:%v\n", old, new, recFrom)
 		kv.workList[new.Num] = MigrateWork{recFrom, *old}
 	}
 }
@@ -760,7 +774,7 @@ func (kv *ShardKV) restartMigration() {
 			kv.mu.Unlock()
 
 			if cur != now {
-				fmt.Printf("[%d-%d]:config update finish\n", kv.gid, kv.me)
+				DPrintf("done....\n")
 				return
 			}
 
@@ -769,7 +783,7 @@ func (kv *ShardKV) restartMigration() {
 			}
 
 			time.Sleep(100 * time.Millisecond)
-			fmt.Printf("[%d-%d]: restartMigration: config: %d, work: %v\n", kv.gid, kv.me, now, work.RecFrom)
+			DPrintf("[%d-%d]: restartMigration: config: %d, work: %v\n", kv.gid, kv.me, now, work.RecFrom)
 		}
 	}
 }
@@ -798,8 +812,8 @@ func (kv *ShardKV) getNextConfig() {
 
 				// need waiting? just try, if failed, another leader will reply
 				if _, isLeader := kv.rf.GetState(); isLeader && kv.isMigrateDone("getNextConfig()") {
-					kv.rf.Start(Cfg{Config: kv.configs[1]}) //leader会把最新的cfg发送给底层raft
-					fmt.Printf("[%d-%d]: leader %d detect new config (%d->%d),kv.config.shard:%v.\n", kv.gid, kv.me, kv.me,
+					kv.rf.Start(Cfg{Config: kv.configs[1]})
+					DPrintf("[%d-%d]: leader %d detect new config (%d->%d),kv.config.shard:%v.\n", kv.gid, kv.me, kv.me,
 						kv.configs[0].Num, kv.configs[1].Num, kv.configs[1].Shards)
 				}
 			}
@@ -811,12 +825,27 @@ func (kv *ShardKV) getNextConfig() {
 
 // should be called when holding the lock
 func (kv *ShardKV) isMigrateDone(pos string) bool {
-	_, ok := kv.workList[kv.configs[0].Num] //workList保存了未完成的任务
+	_, ok := kv.workList[kv.configs[0].Num]
 	defer func() {
-		fmt.Printf("[%d-%d]: %s: Is migrate to kv.configs[0].Num: %d Done? %t,kv.workList[kv.configs[0].Num]:((shard, gid), config)%v\n",
-			kv.gid, kv.me, pos, kv.configs[0].Num, !ok, kv.workList[kv.configs[0].Num])
+		DPrintf("[%d-%d]: %s: Is migrate to %d Done? %t\n",
+			kv.gid, kv.me, pos, kv.configs[0].Num, !ok)
 	}()
 	return !ok
+}
+
+// should be called when holding the lock
+func removeRedundant(configs []shardmaster.Config) []shardmaster.Config {
+	if len(configs) == 0 {
+		return configs
+	}
+	num := 0
+	for i := 1; i < len(configs); i++ {
+		if configs[i].Num != configs[num].Num {
+			num++
+			configs[num] = configs[i]
+		}
+	}
+	return configs[:num+1]
 }
 
 //
@@ -881,12 +910,12 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister,
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
 
 	// read snapshot when start
-	kv.readSnapshot(kv.persist.ReadSnapshot()) //raft层会把useSnapshot设置为true
+	kv.readSnapshot(kv.persist.ReadSnapshot())
 
 	// long-running work
 	go kv.applyDaemon()   // get log entry from raft layer
 	go kv.getNextConfig() // query shard master for configuration
 
-	fmt.Printf("StartServer: %d-%d\n", kv.gid, kv.me)
+	DPrintf("StartServer: %d-%d\n", kv.gid, kv.me)
 	return kv
 }

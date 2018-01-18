@@ -1,0 +1,559 @@
+Test: unaffected shard access (challenge 2) ...
+StartServer: 100-0
+StartServer: 100-1
+StartServer: 100-2
+StartServer: 101-0
+StartServer: 101-1
+StartServer: 101-2
+StartServer: 102-0
+StartServer: 102-1
+StartServer: 102-2
+join map[100:[server-100-0 server-100-1 server-100-2]]
+sm 2 Before join cfg.group:map[]
+sm 2 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+after balance shard:[100 100 100 100 100 100 100 100 100 100]
+[Shard client get]shard:8,key:0,args(key,value,op,clientId,seqNo):{0 100 Put 4393647395723507068 1}
+[100-2]: getNextConfig(): Is migrate to kv.configs[0].Num: 0 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[100-2]: leader 2 detect new config (0->1),kv.config.shard:[100 100 100 100 100 100 100 100 100 100].
+[100-2]: server 2 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+sm 0 Before join cfg.group:map[]
+sm 0 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+after balance shard:[100 100 100 100 100 100 100 100 100 100]
+sm 1 Before join cfg.group:map[]
+sm 1 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+after balance shard:[100 100 100 100 100 100 100 100 100 100]
+[100-0]: server 0 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 1).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[102-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 0 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[102-0]: leader 0 detect new config (0->1),kv.config.shard:[100 100 100 100 100 100 100 100 100 100].
+[102-0]: server 0 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[102-1]: server 1 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 0 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[101-0]: leader 0 detect new config (0->1),kv.config.shard:[100 100 100 100 100 100 100 100 100 100].
+[Shard client get]shard:8,key:0,args(key,value,op,clientId,seqNo):{0 100 Put 4393647395723507068 1}
+[102-2]: server 2 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: PutAppend args: &{0 100 Put 4393647395723507068 1}, reply: &{true }. (shard: 8)
+[100-1]: PutAppend args: &{0 100 Put 4393647395723507068 1}, reply: &{true }. (shard: 8)
+[101-0]: server 0 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[101-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{0 100 Put 4393647395723507068 1}, reply: &{false OK}. (shard: 8)
+[Shard client get]shard:9,key:1,args(key,value,op,clientId,seqNo):{1 100 Put 4393647395723507068 2}
+[100-0]: PutAppend args: &{1 100 Put 4393647395723507068 2}, reply: &{true }. (shard: 9)
+[101-2]: server 2 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-1]: server 1 switch to new config (0->1, shards: [100 100 100 100 100 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[101-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: PutAppend args: &{1 100 Put 4393647395723507068 2}, reply: &{true }. (shard: 9)
+[100-0]: server 0 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{1 100 Put 4393647395723507068 2}, reply: &{false OK}. (shard: 9)
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[Shard client get]shard:9,key:1,args(key,value,op,clientId,seqNo):{1 100 Put 4393647395723507068 2}
+[100-1]: PutAppend args: &{1 100 Put 4393647395723507068 2}, reply: &{true }. (shard: 9)
+[100-2]: PutAppend rpc: duplicate request: 2 - 2.
+[100-2]: PutAppend args: &{1 100 Put 4393647395723507068 2}, reply: &{false OK}. (shard: 9)
+[Shard client get]shard:0,key:2,args(key,value,op,clientId,seqNo):{2 100 Put 4393647395723507068 3}
+[100-0]: PutAppend args: &{2 100 Put 4393647395723507068 3}, reply: &{true }. (shard: 0)
+[100-1]: PutAppend args: &{2 100 Put 4393647395723507068 3}, reply: &{true }. (shard: 0)
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{2 100 Put 4393647395723507068 3}, reply: &{false OK}. (shard: 0)
+[Shard client get]shard:1,key:3,args(key,value,op,clientId,seqNo):{3 100 Put 4393647395723507068 4}
+[100-0]: PutAppend args: &{3 100 Put 4393647395723507068 4}, reply: &{true }. (shard: 1)
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{3 100 Put 4393647395723507068 4}, reply: &{false OK}. (shard: 1)
+[Shard client get]shard:2,key:4,args(key,value,op,clientId,seqNo):{4 100 Put 4393647395723507068 5}
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: PutAppend args: &{4 100 Put 4393647395723507068 5}, reply: &{true }. (shard: 2)
+[100-1]: PutAppend args: &{4 100 Put 4393647395723507068 5}, reply: &{true }. (shard: 2)
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{4 100 Put 4393647395723507068 5}, reply: &{false OK}. (shard: 2)
+[Shard client get]shard:3,key:5,args(key,value,op,clientId,seqNo):{5 100 Put 4393647395723507068 6}
+[100-0]: PutAppend args: &{5 100 Put 4393647395723507068 6}, reply: &{true }. (shard: 3)
+[100-1]: PutAppend args: &{5 100 Put 4393647395723507068 6}, reply: &{true }. (shard: 3)
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{5 100 Put 4393647395723507068 6}, reply: &{false OK}. (shard: 3)
+[Shard client get]shard:4,key:6,args(key,value,op,clientId,seqNo):{6 100 Put 4393647395723507068 7}
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: PutAppend args: &{6 100 Put 4393647395723507068 7}, reply: &{true }. (shard: 4)
+[100-1]: server 1 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{6 100 Put 4393647395723507068 7}, reply: &{false OK}. (shard: 4)
+[Shard client get]shard:5,key:7,args(key,value,op,clientId,seqNo):{7 100 Put 4393647395723507068 8}
+[100-1]: PutAppend args: &{7 100 Put 4393647395723507068 8}, reply: &{true }. (shard: 5)
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{7 100 Put 4393647395723507068 8}, reply: &{false OK}. (shard: 5)
+[Shard client get]shard:6,key:8,args(key,value,op,clientId,seqNo):{8 100 Put 4393647395723507068 9}
+[100-0]: PutAppend args: &{8 100 Put 4393647395723507068 9}, reply: &{true }. (shard: 6)
+[100-1]: PutAppend args: &{8 100 Put 4393647395723507068 9}, reply: &{true }. (shard: 6)
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{8 100 Put 4393647395723507068 9}, reply: &{false OK}. (shard: 6)
+[Shard client get]shard:7,key:9,args(key,value,op,clientId,seqNo):{9 100 Put 4393647395723507068 10}
+[100-0]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[100-1]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[Shard client get]shard:7,key:9,args(key,value,op,clientId,seqNo):{9 100 Put 4393647395723507068 10}
+[100-0]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[100-1]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[Shard client get]shard:7,key:9,args(key,value,op,clientId,seqNo):{9 100 Put 4393647395723507068 10}
+[100-0]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[100-1]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{true }. (shard: 7)
+[100-2]: server 2 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{9 100 Put 4393647395723507068 10}, reply: &{false OK}. (shard: 7)
+va:[100 100 100 100 100 100 100 100 100 100]
+join map[101:[server-101-0 server-101-1 server-101-2]]
+[100-0]: server 0 read snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 generate snapshot (configs: [{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+sm 2 Before join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+sm 2 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]
+after balance shard:[101 101 101 101 101 100 100 100 100 100]
+sm 1 Before join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+sm 1 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]
+after balance shard:[101 101 101 101 101 100 100 100 100 100]
+sm 0 Before join cfg.group:map[100:[server-100-0 server-100-1 server-100-2]]
+sm 0 After join cfg.group:map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]
+after balance shard:[101 101 101 101 101 100 100 100 100 100]
+[101-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 1 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[101-0]: leader 0 detect new config (1->2),kv.config.shard:[101 101 101 101 101 100 100 100 100 100].
+c.Shards:[101 101 101 101 101 100 100 100 100 100],owned:map[3:true 6:false 8:false 9:false 0:true 1:true 5:false 7:false 2:true 4:true]
+oldconfig:&{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]},newConfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]},receFrom:[{0 100} {1 100} {2 100} {3 100} {4 100}]
+[101-0]: server 0 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}, configs: 2).
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: getNextConfig(): Is migrate to kv.configs[0].Num: 1 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[100-2]: leader 2 detect new config (1->2),kv.config.shard:[101 101 101 101 101 100 100 100 100 100].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 0 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 3 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 0 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 3 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: server 2 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 3 101}, reply wrong leader: false, reply err: "OK", db: map[5:100].
+[101-0]: replyHandler: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: leader 0 receive shard: 3, from: 100.
+oldconfig:&{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]},newConfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]},receFrom:[{0 100} {1 100} {2 100} {3 100} {4 100}]
+[101-1]: server 1 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}, configs: 2).
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+oldconfig:&{1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]},newConfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]},receFrom:[{0 100} {1 100} {2 100} {3 100} {4 100}]
+[101-2]: server 2 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}, configs: 2).
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 0 101}, reply wrong leader: false, reply err: "OK", db: map[2:100].
+[101-0]: replyHandler: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: leader 0 receive shard: 0, from: 100.
+[101-0]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: kv.workList(recfrom(shard,gid),last config): map[2:{[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: leader 0 issue cleanup shard: 0, gid: 100.
+[101-0]: leader 0 issue cleanup shard: 3, gid: 100.
+[100-0]: server 0 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[102-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 1 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[102-0]: leader 0 detect new config (1->2),kv.config.shard:[101 101 101 101 101 100 100 100 100 100].
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 0 101}, reply: &{true }.
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 3 101}, reply: &{true }.
+[100-1]: request CleanUp, args(kv.config num,shard,gid): &{2 3 101}, reply: &{true }.
+[102-0]: server 0 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: request CleanUp, args(kv.config num,shard,gid): &{2 0 101}, reply: &{true }.
+[100-2]: request CleanUp, args(kv.config num,shard,gid): &{2 3 101}, reply: &{false OK}.
+[100-2]: request CleanUp, args(kv.config num,shard,gid): &{2 0 101}, reply: &{false OK}.
+[101-2]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {3 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-2]: kv.workList(recfrom(shard,gid),last config): map[2:{[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{0 100} {1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-2]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[100-1]: server 1 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-1]: server 1 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-2]: server 2 fininshed gc, shard: 3 @ config: 2, from gid: 101
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: server 2 fininshed gc, shard: 0 @ config: 2, from gid: 101
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[102-2]: server 2 switch to new config (1->2, shards: [101 101 101 101 101 100 100 100 100 100], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: true, reply err: "", db: map[].
+[102-1]: server 1 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[102-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 4 101}, reply wrong leader: false, reply err: "OK", db: map[6:100].
+[101-0]: replyHandler: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: leader 0 receive shard: 4, from: 100.
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 2 101}, reply wrong leader: false, reply err: "OK", db: map[4:100].
+[101-0]: replyHandler: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: leader 0 receive shard: 2, from: 100.
+[100-1]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: true, reply err: "", db: map[].
+[100-0]: server 0 fininshed gc, shard: 3 @ config: 2, from gid: 101
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-0]: server 0 fininshed gc, shard: 0 @ config: 2, from gid: 101
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: request Migrate, args(worklist num,gid,shard): &{2 1 101}, reply wrong leader: false, reply err: "OK", db: map[3:100].
+[101-0]: replyHandler: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: leader 0 receive shard: 1, from: 100.
+[101-0]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: leader 0 issue cleanup shard: 2, gid: 100.
+[101-0]: leader 0 issue cleanup shard: 4, gid: 100.
+[101-0]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-0]: kv.workList(recfrom(shard,gid),last config): map[]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-0]: leader 0 issue cleanup shard: 1, gid: 100.
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 1 101}, reply: &{true }.
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 2 101}, reply: &{true }.
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 4 101}, reply: &{true }.
+[100-1]: request CleanUp, args(kv.config num,shard,gid): &{2 1 101}, reply: &{true }.
+[100-1]: server 1 fininshed gc, shard: 3 @ config: 2, from gid: 101
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: server 1 fininshed gc, shard: 0 @ config: 2, from gid: 101
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: request CleanUp, args(kv.config num,shard,gid): &{2 2 101}, reply: &{true }.
+[100-2]: request CleanUp, args(kv.config num,shard,gid): &{2 4 101}, reply: &{false OK}.
+[101-2]: server 2 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-1]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100} {2 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-1]: kv.workList(recfrom(shard,gid),last config): map[2:{[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[2:{[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: applyMigrateData: Is migrate to kv.configs[0].Num: 2 Done? false,kv.workList[kv.configs[0].Num]:((shard, gid), config){[{1 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}
+[101-1]: kv.workList(recfrom(shard,gid),last config): map[]
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-2]: server 2 fininshed gc, shard: 4 @ config: 2, from gid: 101
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-0]: server 0 fininshed gc, shard: 4 @ config: 2, from gid: 101
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: server 1 fininshed gc, shard: 4 @ config: 2, from gid: 101
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-0]: request CleanUp, args(kv.config num,shard,gid): &{2 1 101}, reply: &{true }.
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-1]: request CleanUp, args(kv.config num,shard,gid): &{2 2 101}, reply: &{true }.
+[100-2]: request CleanUp, args(kv.config num,shard,gid): &{2 1 101}, reply: &{false OK}.
+[100-2]: request CleanUp, args(kv.config num,shard,gid): &{2 2 101}, reply: &{false OK}.
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-2]: server 2 fininshed gc, shard: 1 @ config: 2, from gid: 101
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: server 2 fininshed gc, shard: 2 @ config: 2, from gid: 101
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-1]: server 1 fininshed gc, shard: 1 @ config: 2, from gid: 101
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: server 1 fininshed gc, shard: 2 @ config: 2, from gid: 101
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-0]: server 0 fininshed gc, shard: 1 @ config: 2, from gid: 101
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-0]: server 0 fininshed gc, shard: 2 @ config: 2, from gid: 101
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[Shard client get]shard:8,key:0,args(key,value,op,clientId,seqNo):{0 101 Put 4393647395723507068 11}
+[100-0]: PutAppend args: &{0 101 Put 4393647395723507068 11}, reply: &{true }. (shard: 8)
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-1]: PutAppend args: &{0 101 Put 4393647395723507068 11}, reply: &{true }. (shard: 8)
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{0 101 Put 4393647395723507068 11}, reply: &{false OK}. (shard: 8)
+[Shard client get]shard:9,key:1,args(key,value,op,clientId,seqNo):{1 101 Put 4393647395723507068 12}
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-0]: PutAppend args: &{1 101 Put 4393647395723507068 12}, reply: &{true }. (shard: 9)
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: PutAppend args: &{1 101 Put 4393647395723507068 12}, reply: &{true }. (shard: 9)
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{1 101 Put 4393647395723507068 12}, reply: &{false OK}. (shard: 9)
+[Shard client get]shard:0,key:2,args(key,value,op,clientId,seqNo):{2 101 Put 4393647395723507068 13}
+[100-0]: PutAppend args: &{2 101 Put 4393647395723507068 13}, reply: &{true }. (shard: 0)
+[100-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-1]: PutAppend args: &{2 101 Put 4393647395723507068 13}, reply: &{true }. (shard: 0)
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[100-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[100-2]: PutAppend args: &{2 101 Put 4393647395723507068 13}, reply: &{false ErrWrongGroup}. (shard: 0)
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[Shard client get]shard:0,key:2,args(key,value,op,clientId,seqNo):{2 101 Put 4393647395723507068 13}
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-0]: PutAppend args: &{2 101 Put 4393647395723507068 13}, reply: &{false OK}. (shard: 0)
+[Shard client get]shard:1,key:3,args(key,value,op,clientId,seqNo):{3 101 Put 4393647395723507068 14}
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: PutAppend args: &{3 101 Put 4393647395723507068 14}, reply: &{true }. (shard: 1)
+[101-1]: server 1 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: PutAppend args: &{3 101 Put 4393647395723507068 14}, reply: &{true }. (shard: 1)
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[Shard client get]shard:1,key:3,args(key,value,op,clientId,seqNo):{3 101 Put 4393647395723507068 14}
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-0]: PutAppend args: &{3 101 Put 4393647395723507068 14}, reply: &{false OK}. (shard: 1)
+[Shard client get]shard:2,key:4,args(key,value,op,clientId,seqNo):{4 101 Put 4393647395723507068 15}
+[101-2]: PutAppend args: &{4 101 Put 4393647395723507068 15}, reply: &{true }. (shard: 2)
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[Shard client get]shard:2,key:4,args(key,value,op,clientId,seqNo):{4 101 Put 4393647395723507068 15}
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-0]: server 0 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-0]: PutAppend args: &{4 101 Put 4393647395723507068 15}, reply: &{false OK}. (shard: 2)
+va:[101 101 101 101 101 100 100 100 100 100]
+[100-0]: server 0 is shutting down.
+[100-1]: server 1 is shutting down.
+[100-2]: server 2 is shutting down.
+leave failed, args:&{[100] 1271615104198240767 4}
+[101-1]: server 1 read snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-1]: server 1 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}], worklist: map[]).
+[101-2]: server 2 generate snapshot (configs: [{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+leave failed, args:&{[100] 1271615104198240767 4}
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[102-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 2 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[102-0]: leader 0 detect new config (2->3),kv.config.shard:[101 101 101 101 101 101 101 101 101 101].
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[102-0]: server 0 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+leave failed, args:&{[100] 1271615104198240767 4}
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[102-2]: server 2 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[102-1]: server 1 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}, configs: 2).
+[102-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[]).
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+leave failed, args:&{[100] 1271615104198240767 4}
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-0]: getNextConfig(): Is migrate to kv.configs[0].Num: 2 Done? true,kv.workList[kv.configs[0].Num]:((shard, gid), config){[] {0 [0 0 0 0 0 0 0 0 0 0] map[]}}
+[101-0]: leader 0 detect new config (2->3),kv.config.shard:[101 101 101 101 101 101 101 101 101 101].
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+oldconfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]},newConfig:&{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]},receFrom:[{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}, configs: 2).
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+oldconfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]},newConfig:&{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]},receFrom:[{7 100} {8 100} {5 100} {6 100} {9 100}]
+[101-2]: server 2 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[{7 100} {8 100} {5 100} {6 100} {9 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}, configs: 2).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{7 100} {8 100} {5 100} {6 100} {9 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-2]:config update finish
+oldconfig:&{2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]},newConfig:&{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]},receFrom:[{8 100} {6 100} {7 100} {9 100} {5 100}]
+[101-1]: server 1 switch to new config (2->3, shards: [101 101 101 101 101 101 101 101 101 101], workList: {[{8 100} {6 100} {7 100} {9 100} {5 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}, configs: 2).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{8 100} {6 100} {7 100} {9 100} {5 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: restartMigration: config: 2, work: [{1 100} {2 100} {4 100}]
+[101-1]:config update finish
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{2 4393647395723507068 16}, reply: &{false OK 101}. (shard: 0)
+i:2,Put:0,101-1
+[Shard client get]shard:0,key:2,args(key,value,op,clientId,seqNo):{2 101-1 Put 4393647395723507068 17}
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: PutAppend args: &{2 101-1 Put 4393647395723507068 17}, reply: &{false OK}. (shard: 0)
+i:2,Get:0,101-1
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{8 100} {6 100} {7 100} {9 100} {5 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{8 100} {6 100} {7 100} {9 100} {5 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}} 2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{2 4393647395723507068 18}, reply: &{false OK 101-1}. (shard: 0)
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{8 100} {6 100} {7 100} {9 100} {5 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{3 4393647395723507068 19}, reply: &{false OK 101}. (shard: 1)
+i:3,Put:1,101-1
+[Shard client get]shard:1,key:3,args(key,value,op,clientId,seqNo):{3 101-1 Put 4393647395723507068 20}
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: PutAppend args: &{3 101-1 Put 4393647395723507068 20}, reply: &{false OK}. (shard: 1)
+i:3,Get:1,101-1
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: server 1 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{3 4393647395723507068 21}, reply: &{false OK 101-1}. (shard: 1)
+[101-1]: Get args: &{3 4393647395723507068 21}, reply: &{true  }. (shard: 1)
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: Get args: &{3 4393647395723507068 21}, reply: &{true  }. (shard: 1)
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: Get rpc: duplicate request: 21 - 21.
+[101-0]: Get args: &{3 4393647395723507068 21}, reply: &{false OK 101-1}. (shard: 1)
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{4 4393647395723507068 22}, reply: &{false OK 101}. (shard: 2)
+i:4,Put:2,101-1
+[Shard client get]shard:2,key:4,args(key,value,op,clientId,seqNo):{4 101-1 Put 4393647395723507068 23}
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}} 2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: PutAppend args: &{4 101-1 Put 4393647395723507068 23}, reply: &{false OK}. (shard: 2)
+[101-1]: PutAppend args: &{4 101-1 Put 4393647395723507068 23}, reply: &{true }. (shard: 2)
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: PutAppend args: &{4 101-1 Put 4393647395723507068 23}, reply: &{true }. (shard: 2)
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[Shard client get]shard:2,key:4,args(key,value,op,clientId,seqNo):{4 101-1 Put 4393647395723507068 23}
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: PutAppend rpc: duplicate request: 23 - 23.
+[101-0]: PutAppend args: &{4 101-1 Put 4393647395723507068 23}, reply: &{false OK}. (shard: 2)
+i:4,Get:2,101-1
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{4 4393647395723507068 24}, reply: &{false OK 101-1}. (shard: 2)
+[101-1]: Get args: &{4 4393647395723507068 24}, reply: &{true  }. (shard: 2)
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: Get args: &{4 4393647395723507068 24}, reply: &{true  }. (shard: 2)
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: Get rpc: duplicate request: 24 - 24.
+[101-0]: Get args: &{4 4393647395723507068 24}, reply: &{false OK 101-1}. (shard: 2)
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{5 4393647395723507068 25}, reply: &{false OK 100}. (shard: 3)
+i:5,Put:3,100-1
+[Shard client get]shard:3,key:5,args(key,value,op,clientId,seqNo):{5 100-1 Put 4393647395723507068 26}
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: PutAppend args: &{5 100-1 Put 4393647395723507068 26}, reply: &{false OK}. (shard: 3)
+i:5,Get:3,100-1
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}} 2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: Get args: &{5 4393647395723507068 27}, reply: &{false OK 100-1}. (shard: 3)
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{6 4393647395723507068 28}, reply: &{false OK 100}. (shard: 4)
+i:6,Put:4,100-1
+[Shard client get]shard:4,key:6,args(key,value,op,clientId,seqNo):{6 100-1 Put 4393647395723507068 29}
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: server 2 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: server 2 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[2:{[{1 100} {2 100} {4 100}] {1 [100 100 100 100 100 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2]]}} 3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[101:[server-101-0 server-101-1 server-101-2] 100:[server-100-0 server-100-1 server-100-2]]}}]).
+[101-0]: PutAppend args: &{6 100-1 Put 4393647395723507068 29}, reply: &{false OK}. (shard: 4)
+i:6,Get:4,100-1
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-1]: server 1 read snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-1]: server 1 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-2]: restartMigration: config: 3, work: [{5 100} {8 100} {9 100} {6 100} {7 100}]
+[101-0]: server 0 generate snapshot (configs: [{3 [101 101 101 101 101 101 101 101 101 101] map[101:[server-101-0 server-101-1 server-101-2]]}], worklist: map[3:{[{5 100} {8 100} {9 100} {6 100} {7 100}] {2 [101 101 101 101 101 100 100 100 100 100] map[100:[server-100-0 server-100-1 server-100-2] 101:[server-101-0 server-101-1 server-101-2]]}}]).
+[101-0]: Get args: &{6 4393647395723507068 30}, reply: &{false OK 100-1}. (shard: 4)
+  ... Passed
+PASS
+ok  	shardkv	7.526s

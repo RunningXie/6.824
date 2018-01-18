@@ -38,8 +38,8 @@ const (
 type Err string
 
 type JoinArgs struct {
-	Servers map[int][]string // new GID -> servers mappings
-	ReqId int
+	Servers  map[int][]string // new GID -> servers mappings
+	ReqId    int
 	ClientId int64
 }
 
@@ -49,9 +49,9 @@ type JoinReply struct {
 }
 
 type LeaveArgs struct {
-	GIDs []int
+	GIDs     []int
 	ClientId int64
-	ReqId int
+	ReqId    int
 }
 
 type LeaveReply struct {
@@ -60,10 +60,10 @@ type LeaveReply struct {
 }
 
 type MoveArgs struct {
-	Shard int
-	GID   int
+	Shard    int
+	GID      int
 	ClientId int64
-	ReqId int
+	ReqId    int
 }
 
 type MoveReply struct {
@@ -72,9 +72,9 @@ type MoveReply struct {
 }
 
 type QueryArgs struct {
-	Num int // desired config number
+	Num      int // desired config number
 	ClientId int64
-	ReqId int
+	ReqId    int
 }
 
 type QueryReply struct {

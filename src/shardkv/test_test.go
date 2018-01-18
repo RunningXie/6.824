@@ -5,10 +5,13 @@ import "strconv"
 import "time"
 import "fmt"
 import "sync/atomic"
-import "math/rand"
+import (
+	"math/rand"
+)
 
 func check(t *testing.T, ck *Clerk, key string, value string) {
 	v := ck.Get(key)
+
 	if v != value {
 		t.Fatalf("Get(%v): expected:\n%v\nreceived:\n%v", key, value, v)
 	}
@@ -20,12 +23,11 @@ func check(t *testing.T, ck *Clerk, key string, value string) {
 func TestStaticShards(t *testing.T) {
 	fmt.Printf("Test: static shards ...\n")
 
-	cfg := make_config(t, 3, false, -1)
+	cfg := make_config(t, 3, false, -1) //每个group有3个server
 	defer cfg.cleanup()
 
 	ck := cfg.makeClient()
-
-	cfg.join(0)
+	cfg.join(0) //make_config只是启动了server但是group是空，这里把gid为100和101,join,因此这个test和gid：102没什么关系，但是作为shardmaster,其shard需要与100，101保持一致
 	cfg.join(1)
 
 	n := 10
@@ -36,6 +38,7 @@ func TestStaticShards(t *testing.T) {
 		va[i] = randstring(20)
 		ck.Put(ka[i], va[i])
 	}
+
 	for i := 0; i < n; i++ {
 		check(t, ck, ka[i], va[i])
 	}
@@ -71,10 +74,13 @@ func TestStaticShards(t *testing.T) {
 	if ndone != 5 {
 		t.Fatalf("expected 5 completions with one shard dead; got %v\n", ndone)
 	}
-
 	// bring the crashed shard/group back to life.
+	time.Sleep(1 * time.Second)
+	fmt.Printf("start group\n")
 	cfg.StartGroup(1)
 	for i := 0; i < n; i++ {
+		time.Sleep(1 * time.Second)
+		fmt.Printf("check %v ,%v\n", ka[i], va[i])
 		check(t, ck, ka[i], va[i])
 	}
 
@@ -111,7 +117,7 @@ func TestJoinLeave(t *testing.T) {
 		ck.Append(ka[i], x)
 		va[i] += x
 	}
-
+	fmt.Printf("leave 100\n")
 	cfg.leave(0)
 
 	for i := 0; i < n; i++ {
@@ -124,8 +130,8 @@ func TestJoinLeave(t *testing.T) {
 	// allow time for shards to transfer.
 	time.Sleep(1 * time.Second)
 
-	cfg.checklogs()
-	cfg.ShutdownGroup(0)
+	cfg.checklogs()      //检查是否进行了snapshot
+	cfg.ShutdownGroup(0) //100已经leave
 
 	for i := 0; i < n; i++ {
 		check(t, ck, ka[i], va[i])
@@ -186,11 +192,11 @@ func TestSnapshot(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	cfg.checklogs()
-
+	fmt.Printf("Shut down all group\n")
 	cfg.ShutdownGroup(0)
 	cfg.ShutdownGroup(1)
 	cfg.ShutdownGroup(2)
-
+	fmt.Printf("Restart all group\n")
 	cfg.StartGroup(0)
 	cfg.StartGroup(1)
 	cfg.StartGroup(2)
@@ -223,15 +229,15 @@ func TestMissChange(t *testing.T) {
 	for i := 0; i < n; i++ {
 		check(t, ck, ka[i], va[i])
 	}
-
+	fmt.Printf("join 101\n")
 	cfg.join(1)
-
+	fmt.Printf("shut down 100-0,101-0,102-0\n")
 	cfg.ShutdownServer(0, 0)
 	cfg.ShutdownServer(1, 0)
 	cfg.ShutdownServer(2, 0)
-
+	fmt.Printf("join 102, leave 101, leave 100\n")
 	cfg.join(2)
-	cfg.leave(1)
+	cfg.leave(1) //leave之后仍然可以对其相关的属性进行修改
 	cfg.leave(0)
 
 	for i := 0; i < n; i++ {
@@ -240,7 +246,7 @@ func TestMissChange(t *testing.T) {
 		ck.Append(ka[i], x)
 		va[i] += x
 	}
-
+	fmt.Printf("join 101\n")
 	cfg.join(1)
 
 	for i := 0; i < n; i++ {
@@ -249,7 +255,7 @@ func TestMissChange(t *testing.T) {
 		ck.Append(ka[i], x)
 		va[i] += x
 	}
-
+	fmt.Printf("restart 100-0,101-0,102-0\n")
 	cfg.StartServer(0, 0)
 	cfg.StartServer(1, 0)
 	cfg.StartServer(2, 0)
@@ -262,11 +268,11 @@ func TestMissChange(t *testing.T) {
 	}
 
 	time.Sleep(2 * time.Second)
-
+	fmt.Printf("shut down 100-1, 101-1, 102-1\n")
 	cfg.ShutdownServer(0, 1)
 	cfg.ShutdownServer(1, 1)
 	cfg.ShutdownServer(2, 1)
-
+	fmt.Printf("join 100, leave 102\n")
 	cfg.join(0)
 	cfg.leave(2)
 
@@ -276,7 +282,7 @@ func TestMissChange(t *testing.T) {
 		ck.Append(ka[i], x)
 		va[i] += x
 	}
-
+	fmt.Printf("Restart 100-1, 101-1, 102-1\n")
 	cfg.StartServer(0, 1)
 	cfg.StartServer(1, 1)
 	cfg.StartServer(2, 1)
@@ -315,6 +321,7 @@ func TestConcurrent1(t *testing.T) {
 		ck1 := cfg.makeClient()
 		for atomic.LoadInt32(&done) == 0 {
 			x := randstring(5)
+			fmt.Printf("append %v %v\n", ka[i], x)
 			ck1.Append(ka[i], x)
 			va[i] += x
 			time.Sleep(10 * time.Millisecond)
@@ -331,16 +338,19 @@ func TestConcurrent1(t *testing.T) {
 	cfg.join(2)
 	time.Sleep(500 * time.Millisecond)
 	cfg.leave(0)
-
+	fmt.Printf("shut down group 100\n")
 	cfg.ShutdownGroup(0)
 	time.Sleep(100 * time.Millisecond)
+	fmt.Printf("shut down group 101\n")
 	cfg.ShutdownGroup(1)
 	time.Sleep(100 * time.Millisecond)
+	fmt.Printf("shut down group 102\n")
 	cfg.ShutdownGroup(2)
 
 	cfg.leave(2)
 
 	time.Sleep(100 * time.Millisecond)
+	fmt.Printf("Restart group 100,101,102\n")
 	cfg.StartGroup(0)
 	cfg.StartGroup(1)
 	cfg.StartGroup(2)
@@ -353,7 +363,7 @@ func TestConcurrent1(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	atomic.StoreInt32(&done, 1)
+	atomic.StoreInt32(&done, 1) //只有ff()跳出for循环才会卡在ch那里
 	for i := 0; i < n; i++ {
 		<-ch
 	}
@@ -615,7 +625,7 @@ func TestChallenge1Delete(t *testing.T) {
 	}
 
 	// 27 keys should be stored once.
-	// 3 keys should also be stored in client dup tables.
+	// 3 keys should also be stored in client dup tables.Get操作会在kv.duplicate中保存上一次的查询结果
 	// everything on 3 replicas.
 	// plus slop.
 	expected := 3 * (((n - 3) * 1000) + 2*3*1000 + 6000)
@@ -723,7 +733,7 @@ func TestChallenge2Unaffected(t *testing.T) {
 		va[i] = "100"
 		ck.Put(ka[i], va[i])
 	}
-
+	fmt.Printf("va:%v\n", va)
 	// JOIN 101
 	cfg.join(1)
 
@@ -731,9 +741,9 @@ func TestChallenge2Unaffected(t *testing.T) {
 	c := cfg.mck.Query(-1)
 	owned := make(map[int]bool, n)
 	for s, gid := range c.Shards {
-		owned[s] = gid == cfg.groups[1].gid
+		owned[s] = gid == cfg.groups[1].gid //cfg.groups[1]对应着101的group信息
 	}
-
+	fmt.Printf("c.Shards:%v,owned:%v\n", c.Shards, owned)
 	// Wait for migration to new config to complete, and for clients to
 	// start using this updated config. Gets to any key k such that
 	// owned[shard(k)] == true should now be served by group 101.
@@ -744,12 +754,12 @@ func TestChallenge2Unaffected(t *testing.T) {
 			ck.Put(ka[i], va[i])
 		}
 	}
-
+	fmt.Printf("va:%v\n", va)
 	// KILL 100
 	cfg.ShutdownGroup(0)
 
 	// LEAVE 100
-	// 101 doesn't get a chance to migrate things previously owned by 100
+	// 101 doesn't get a chance to migrate things previously owned by 100,先关闭了group：100，然后leave只能保证leave后shard正确，但是不能把原来group中的数据读取出来
 	cfg.leave(0)
 
 	// Wait to make sure clients see new config
@@ -760,11 +770,12 @@ func TestChallenge2Unaffected(t *testing.T) {
 		shard := int(ka[i][0]) % 10
 		if owned[shard] {
 			check(t, ck, ka[i], va[i])
+			fmt.Printf("i:%v,Put:%v,%v\n", i, shard, va[i]+"-1")
 			ck.Put(ka[i], va[i]+"-1")
+			fmt.Printf("i:%v,Get:%v,%v\n", i, shard, va[i]+"-1")
 			check(t, ck, ka[i], va[i]+"-1")
 		}
 	}
-
 	fmt.Printf("  ... Passed\n")
 }
 

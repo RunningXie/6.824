@@ -90,12 +90,13 @@ func (ck *Clerk) Get(key string) string {
 				var reply GetReply
 
 				ok := srv.Call("ShardKV.Get", &args, &reply)
+				fmt.Printf("shardkv client get args:%v,len(servers):%v\n", args, len(servers))
 				if ok && reply.WrongLeader == false && (reply.Err == OK || reply.Err == ErrNoKey) {
 					ck.seq++
-					return reply.Value //这里是for循环唯一的出口,不成功提交会多次发送
+					return reply.Value
 				}
 				if ok && (reply.Err == ErrWrongGroup) {
-					fmt.Printf("shardkv client err wrong group, going to update config\n")
+					fmt.Printf("shardkv client errwronggroup break\n")
 					break
 				}
 			}
@@ -122,7 +123,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 
 	for {
 		shard := key2shard(key)
-		fmt.Printf("[Shard client get]shard:%v,key:%v,args(key,value,op,clientId,seqNo):%v\n", shard, key, args)
+		fmt.Printf("shard:%v,key:%v,args(key,value,op,clientId,seqNo):%v\n", shard, key, args)
 		gid := ck.config.Shards[shard]
 		if servers, ok := ck.config.Groups[gid]; ok {
 			for si := 0; si < len(servers); si++ {
