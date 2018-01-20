@@ -1,19 +1,21 @@
 package raftkv
 
-import "labrpc"
-import "crypto/rand"
 import (
-	"fmt"
+	"crypto/rand"
+	"labrpc"
 	"math/big"
-	"sync"
+	"time"
 )
+
+var clients = make(map[int64]bool)
 
 type Clerk struct {
 	servers []*labrpc.ClientEnd
 	// You will have to modify this struct.
-	id        int64
-	requestId int //相当于int32
-	mu        sync.RWMutex
+
+	leader int   // remember last leader
+	seq    int   // RPC sequence number，相当于int32
+	id     int64 // client id
 }
 
 func nrand() int64 {
@@ -23,12 +25,28 @@ func nrand() int64 {
 	return x
 }
 
+func generateID() int64 {
+	for {
+		x := nrand()
+		if clients[x] {
+			continue
+		}
+		clients[x] = true
+		return x
+	}
+}
+
 func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
 	ck := new(Clerk)
 	ck.servers = servers
+
 	// You'll have to add code here.
-	ck.id = nrand()
-	ck.requestId = 0
+	ck.leader = len(servers)
+	ck.seq = 1
+	ck.id = generateID()
+
+	DPrintf("Clerk: %d\n", ck.id)
+
 	return ck
 }
 
@@ -45,25 +63,35 @@ func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
 // arguments. and reply must be passed as a pointer.
 //
 func (ck *Clerk) Get(key string) string {
-
+	DPrintf("Clerk: Get: %q\n", key)
 	// You will have to modify this function.
-	var args GetArgs
-	args.Id = ck.id
-	args.Key = key
-	ck.mu.Lock()
-	args.RequestId = ck.requestId
-	ck.requestId++
-	ck.mu.Unlock()
+	cnt := len(ck.servers)
 	for {
-		for _, sever := range ck.servers {
-			var reply GetReply
-			ok := sever.Call("RaftKV.Get", &args, &reply)
-			if ok && reply.WrongLeader == false {
-				fmt.Printf("[RaftKV]Get key:%v,value:%v\n", args.Key, reply.Value)
-				return reply.Value
+		args := &GetArgs{Key: key, ClientID: ck.id, SeqNo: ck.seq}
+		reply := new(GetReply)
+
+		ck.leader %= cnt
+		done := make(chan bool, 1)
+		go func() {
+			ok := ck.servers[ck.leader].Call("RaftKV.Get", args, reply)
+			done <- ok
+		}()
+		select {
+		case <-time.After(200 * time.Millisecond): // rpc timeout: 200ms
+			ck.leader++
+			continue
+		case ok := <-done:
+			if ok && !reply.WrongLeader {
+				ck.seq++
+				if reply.Err == OK {
+					return reply.Value
+				}
+				return ""
 			}
+			ck.leader++
 		}
 	}
+	return ""
 }
 
 //
@@ -77,23 +105,29 @@ func (ck *Clerk) Get(key string) string {
 // arguments. and reply must be passed as a pointer.
 //
 func (ck *Clerk) PutAppend(key string, value string, op string) {
+	DPrintf("Clerk: PutAppend: %q => (%q,%q) from: %d\n", op, key, value, ck.id)
 	// You will have to modify this function.
-	var args PutAppendArgs
-	args.Key = key
-	args.Value = value
-	args.Op = op
-	args.Id = ck.id
-	ck.mu.Lock()
-	args.RequestId = ck.requestId
-	ck.requestId++
-	ck.mu.Unlock()
+	cnt := len(ck.servers)
 	for { //不成功提交不会停
-		for _, server := range ck.servers {
-			var reply PutAppendReply
-			ok := server.Call("RaftKV.PutAppend", &args, &reply)
-			if ok && reply.WrongLeader == false {
+		args := &PutAppendArgs{Key: key, Value: value, Op: op, ClientID: ck.id, SeqNo: ck.seq}
+		reply := new(PutAppendReply)
+
+		ck.leader %= cnt
+		done := make(chan bool, 1)
+		go func() {
+			ok := ck.servers[ck.leader].Call("RaftKV.PutAppend", args, reply)
+			done <- ok
+		}()
+		select {
+		case <-time.After(200 * time.Millisecond): // rpc timeout: 200ms
+			ck.leader++
+			continue
+		case ok := <-done:
+			if ok && !reply.WrongLeader && reply.Err == OK {
+				ck.seq++
 				return
 			}
+			ck.leader++
 		}
 	}
 }

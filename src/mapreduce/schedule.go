@@ -1,7 +1,9 @@
 package mapreduce
 
-import ("fmt"
-	"sync")
+import (
+	"fmt"
+	"sync"
+)
 
 //
 // schedule() starts and waits for all tasks in the given phase (Map
@@ -51,7 +53,7 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 					break
 				}
 			}
-		}(i, n_other, phase)//闭包对应的参数
+		}(i, n_other, phase) //闭包对应的参数
 	}
 
 	wg.Wait()

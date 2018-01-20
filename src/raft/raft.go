@@ -18,13 +18,13 @@ package raft
 //
 
 import (
-	"sync"
-	"labrpc"
-	"time"
 	"bytes"
 	"encoding/gob"
-	"sort"
+	"labrpc"
 	"math/rand"
+	"sort"
+	"sync"
+	"time"
 )
 
 func max(a, b int) int {
@@ -60,7 +60,7 @@ type LogEntry struct {
 }
 
 const (
-	Follower  = iota
+	Follower = iota
 	Candidate
 	Leader
 )
@@ -162,7 +162,7 @@ func (rf *Raft) persist() {
 //
 // restore previously persisted state.
 //
-func (rf *Raft) readPersist(data []byte) {//byte字符类型
+func (rf *Raft) readPersist(data []byte) { //byte字符类型
 	// Your code here (2C).
 	if data == nil || len(data) < 1 { // bootstrap without any state?
 		return
@@ -170,7 +170,7 @@ func (rf *Raft) readPersist(data []byte) {//byte字符类型
 	r := bytes.NewBuffer(data)
 	d := gob.NewDecoder(r)
 
-	d.Decode(&rf.CurrentTerm)//相当于io.Reader,顺序要和Encoder对应好
+	d.Decode(&rf.CurrentTerm) //相当于io.Reader,顺序要和Encoder对应好
 	d.Decode(&rf.VotedFor)
 	d.Decode(&rf.Logs)
 	d.Decode(&rf.snapshotIndex)
@@ -249,7 +249,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 		if rf.VotedFor == -1 { //|| (rf.VotedFor == rf.me && !sameTerm) { //|| rf.votedFor == args.CandidateID {
 			// check whether candidate's log is at-least-as update
 			if (args.LastLogTerm == lastLogTerm && args.LastLogIndex >= lastLogIdx) ||
-				args.LastLogTerm > lastLogTerm {//通过日志的对比防止刚刚重连的raft获得选票
+				args.LastLogTerm > lastLogTerm { //通过日志的对比防止刚刚重连的raft获得选票
 
 				rf.resetTimer <- struct{}{}
 
@@ -379,8 +379,8 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	if preLogIdx == args.PrevLogIndex && preLogTerm == args.PrevLogTerm {
 		reply.Success = true
 		// truncate to known match
-		rf.Logs = rf.Logs[:preLogIdx+1-rf.snapshotIndex]//index的值是一直递增的，但log会因为snapshot而不断变化长度
-		rf.Logs = append(rf.Logs, args.Entries...)//args是个数组，所以要加上...
+		rf.Logs = rf.Logs[:preLogIdx+1-rf.snapshotIndex] //index的值是一直递增的，但log会因为snapshot而不断变化长度
+		rf.Logs = append(rf.Logs, args.Entries...)       //args是个数组，所以要加上...
 		var last = rf.snapshotIndex + len(rf.Logs) - 1
 
 		// min(leaderCommit, index of last new entry)
@@ -390,13 +390,13 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			go func() { rf.commitCond.Broadcast() }()
 		}
 		// tell leader to update matched index
-		reply.ConflictTerm = rf.Logs[last-rf.snapshotIndex].Term//rf.log被修改了，要重新取lastIndex
+		reply.ConflictTerm = rf.Logs[last-rf.snapshotIndex].Term //rf.log被修改了，要重新取lastIndex
 		reply.FirstIndex = last
 
 		if len(args.Entries) > 0 {
 			//DPrintf("[%d-%s]: AE success from leader %d (%d cmd @ %d), commit index: l->%d, f->%d.\n",
-				//rf.me, rf, args.LeaderID, len(args.Entries), preLogIdx+1, args.LeaderCommit, rf.commitIndex)
-		} else {//只是收到了心跳
+			//rf.me, rf, args.LeaderID, len(args.Entries), preLogIdx+1, args.LeaderCommit, rf.commitIndex)
+		} else { //只是收到了心跳
 			//DPrintf("[%d-%s]: <heartbeat> current logs: %v\n", rf.me, rf, rf.logs)
 		}
 	} else {
@@ -459,7 +459,7 @@ type InstallSnapshotReply struct {
 	CurrentTerm int // for leader to update itself
 }
 
-func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapshotReply) {//必须设为公有方法
+func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapshotReply) { //必须设为公有方法
 	select {
 	case <-rf.shutdownCh:
 		DPrintf("[%d-%s]: peer %d is shutting down, reject install snapshot rpc request.\n",
@@ -498,7 +498,7 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		rf.snapshotTerm = args.LastIncludedTerm
 		rf.commitIndex = rf.snapshotIndex
 		rf.lastApplied = rf.snapshotIndex
-		rf.Logs = []LogEntry{{rf.snapshotTerm, nil},}
+		rf.Logs = []LogEntry{{rf.snapshotTerm, nil}}
 
 		rf.applyCh <- ApplyMsg{rf.snapshotIndex, nil, true, args.Snapshot}
 
@@ -539,7 +539,7 @@ func (rf *Raft) sendInstallSnapshot(server int, args *InstallSnapshotArgs, reply
 // term. the third return value is true if this server believes it is
 // the leader.
 //
-func (rf *Raft) Start(command interface{}) (int, int, bool) {//从客户端接收command
+func (rf *Raft) Start(command interface{}) (int, int, bool) { //从客户端接收command
 	index, term, isLeader := -1, 0, false
 	select {
 	case <-rf.shutdownCh:
@@ -555,9 +555,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {//从客户端接�
 			index = len(rf.Logs) - 1 + rf.snapshotIndex
 			term = rf.CurrentTerm
 			isLeader = true
-
-			//DPrintf("[%d-%s]: client add new entry (%d-%v), logs: %v\n", rf.me, rf, index, command, rf.logs)
-			DPrintf("[%d-%s]: client add new entry (%d-%v)\n", rf.me, rf, index, command)//%v输出时是按照定义结构体时的顺序输出
+			DPrintf("[%d-%s]: client add new entry (%d-%v)\n", rf.me, rf, index, command) //%v输出时是按照定义结构体时的顺序输出
 
 			// only update leader
 			rf.nextIndex[rf.me] = index + 1
@@ -584,7 +582,7 @@ func (rf *Raft) consistencyCheckReplyHandler(n int, reply *AppendEntriesReply) {
 		rf.updateCommitIndex() // try to update commitIndex
 	} else {
 		// found a new leader? turn to follower
-		if rf.state == Leader && reply.CurrentTerm > rf.CurrentTerm {//(leader)args.Term<(candidate)term
+		if rf.state == Leader && reply.CurrentTerm > rf.CurrentTerm { //(leader)args.Term<(candidate)term
 			rf.turnToFollow()
 			rf.persist()
 			rf.resetTimer <- struct{}{}
@@ -644,7 +642,7 @@ func (rf *Raft) consistencyCheck(n int) {
 			LeaderCommit: rf.commitIndex,
 		}
 		if rf.nextIndex[n] < len(rf.Logs)+rf.snapshotIndex {
-			args.Entries = append(args.Entries, rf.Logs[rf.nextIndex[n]-rf.snapshotIndex:]...)//会把leader的新日志存在里面
+			args.Entries = append(args.Entries, rf.Logs[rf.nextIndex[n]-rf.snapshotIndex:]...) //会把leader的新日志存在里面
 		}
 		go func() {
 			DPrintf("[%d-%s]: consistency Check to peer %d.\n", rf.me, rf, n)
@@ -773,7 +771,7 @@ func (rf *Raft) applyLogEntryDaemon() {
 		if last < cur {
 			rf.lastApplied = rf.commitIndex
 			logs = make([]LogEntry, cur-last)
-			copy(logs, rf.Logs[last+1-rf.snapshotIndex: cur+1-rf.snapshotIndex])
+			copy(logs, rf.Logs[last+1-rf.snapshotIndex:cur+1-rf.snapshotIndex])
 		}
 		rf.mu.Unlock()
 
@@ -802,10 +800,10 @@ func (rf *Raft) canvassVotes() {
 		rf.mu.Lock()
 		defer rf.mu.Unlock()
 		if rf.state == Candidate {
-			if reply.CurrentTerm > voteArgs.Term {//candidate term>当前rf.term,投票被拒绝
+			if reply.CurrentTerm > voteArgs.Term { //candidate term>当前rf.term,投票被拒绝
 				rf.CurrentTerm = reply.CurrentTerm
 				rf.turnToFollow()
-				rf.persist()//存储voteFor,currentTerm,log,snapshot term,snapshot index所以要放在最后
+				rf.persist()                //存储voteFor,currentTerm,log,snapshot term,snapshot index所以要放在最后
 				rf.resetTimer <- struct{}{} // reset timer
 				return
 			}
@@ -868,7 +866,7 @@ func (rf *Raft) electionDaemon() {
 		case <-rf.shutdownCh:
 			DPrintf("[%d-%s]: peer %d is shutting down electionDaemon.\n", rf.me, rf, rf.me)
 			return
-		case <-rf.resetTimer://每次投票后都会重新计时
+		case <-rf.resetTimer: //每次投票后都会重新计时
 			if !rf.electionTimer.Stop() {
 				<-rf.electionTimer.C
 			}
@@ -905,11 +903,11 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.state = Follower
 	rf.VotedFor = -1
 	rf.Logs = make([]LogEntry, 1) // first index is 1
-	rf.Logs[0] = LogEntry{// placeholder
-		Term: 0,
+	rf.Logs[0] = LogEntry{        // placeholder
+		Term:    0,
 		Command: nil,
 	}
-	rf.nextIndex = make([]int, len(peers))//nextIndex是每个peer下一条要存储的日志的索引
+	rf.nextIndex = make([]int, len(peers)) //nextIndex是每个peer下一条要存储的日志的索引
 	rf.matchIndex = make([]int, len(peers))
 
 	// 400~800 ms

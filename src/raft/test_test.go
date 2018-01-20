@@ -117,7 +117,7 @@ func TestFailAgree2B(t *testing.T) {
 	fmt.Printf("After kill follower %d current leader: %d\n", (leader+1)%servers, leader)
 	// agree despite one disconnected server?
 
-	time.Sleep(RaftElectionTimeout*3)
+	time.Sleep(RaftElectionTimeout * 3)
 	// re-connect
 	cfg.connect((leader + 1) % servers)
 	cfg.connect((leader + 2) % servers)
@@ -313,7 +313,7 @@ func TestRejoin2B(t *testing.T) {
 	fmt.Printf("Send cmd to old leader %d\n", leader1)
 	cfg.rafts[leader1].Start(102)
 	cfg.rafts[leader1].Start(103)
-	cfg.rafts[leader1].Start(104) //leader1是可以接受到cmd的，只是不能提交到其他rf
+	cfg.rafts[leader1].Start(104) //leader1是可以接受到cmd的，只是不能提交到其他rf,这三条将会被覆盖
 
 	// new leader commits, also for index=2
 	cfg.one(103, 2)
@@ -355,7 +355,7 @@ func TestBackup2B(t *testing.T) {
 	cfg.disconnect((leader1 + 4) % servers)
 
 	// submit lots of commands that won't commit
-	for i := 0; i < 50; i++ { //多数的rf不能接收到更改其commitIndex，所以leader发的cmd不能实现commit，但可以把leader的日志复制过去
+	for i := 0; i < 50; i++ { //多数的rf不能接收到更改其commitIndex，所以leader发的cmd不能实现commit，将会被覆盖，但可以把leader的日志复制过去
 		cfg.rafts[leader1].Start(rand.Int())
 	}
 

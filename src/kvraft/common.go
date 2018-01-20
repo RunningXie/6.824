@@ -12,11 +12,13 @@ type PutAppendArgs struct {
 	Key   string
 	Value string
 	Op    string // "Put" or "Append"
+
 	// You'll have to add definitions here.
 	// Field names must start with capital letters,
 	// otherwise RPC will break.
-	Id        int64
-	RequestId int
+
+	ClientID int64 // for duplicate request detection
+	SeqNo    int   // sequence no
 }
 
 type PutAppendReply struct {
@@ -27,8 +29,8 @@ type PutAppendReply struct {
 type GetArgs struct {
 	Key string
 	// You'll have to add definitions here.
-	Id        int64
-	RequestId int
+	ClientID int64
+	SeqNo    int
 }
 
 type GetReply struct {

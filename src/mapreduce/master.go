@@ -65,16 +65,16 @@ func Sequential(jobName string, files []string, nreduce int,
 	go mr.run(jobName, files, nreduce, func(phase jobPhase) {
 		switch phase {
 		case mapPhase:
-			for i, f := range mr.files {
+			for i, f := range mr.files { //把输入的文件细分为输入文件*nreduce
 				doMap(mr.jobName, i, f, mr.nReduce, mapF)
 			}
 		case reducePhase:
-			for i := 0; i < mr.nReduce; i++ {
+			for i := 0; i < mr.nReduce; i++ { //合并成nreduce个文件
 				doReduce(mr.jobName, i, mergeName(mr.jobName, i), len(mr.files), reduceF)
 			}
 		}
 	}, func() {
-		mr.stats = []int{len(files) + nreduce}
+		mr.stats = []int{len(files) + nreduce} //直接给数组赋值
 	})
 	return
 }

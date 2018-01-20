@@ -1,11 +1,12 @@
 package mapreduce
 
 import (
-	"hash/fnv"
-	"os"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
+	"io/ioutil"
 	"log"
+	"os"
 )
 
 // doMap manages one map task: it reads one of the input files
@@ -17,7 +18,7 @@ func doMap(
 	inFile string,
 	nReduce int, // the number of reduce task that will be run ("R" in the paper)
 	mapF func(file string, contents string) []KeyValue,
-) {//实现的是doMap函数，mapF只是一个参数
+) { //实现的是doMap函数，mapF只是一个参数
 	//
 	// You will need to write this function.
 	//
@@ -58,6 +59,7 @@ func doMap(
 	// Remember to close the file after you have written all the values!
 	//
 	contents, err := ioutil.ReadFile(inFile)
+	fmt.Printf("inFile:%v\n", inFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +67,7 @@ func doMap(
 	// Create nReduce file for each map file.
 	reduceFiles := make([]*os.File, nReduce)
 	for r := range reduceFiles {
-		filename := reduceName(jobName, mapTaskNumber, r)
+		filename := reduceName(jobName, mapTaskNumber, r) //mrtmp.test-0-0
 		reduceFiles[r], err = os.Create(filename)
 		if err != nil {
 			log.Fatal(err)
@@ -75,8 +77,8 @@ func doMap(
 
 	// Divide up the output of a map task.
 	// Partition the key-value pairs to corresponding file.
-	for _, kv := range kvs {//用json把数据写到文件里
-		r := int(ihash(kv.Key)) % nReduce//每行modnReaduce存到中间文件里
+	for _, kv := range kvs { //用json把数据写到文件里
+		r := int(ihash(kv.Key)) % nReduce //每行modnReaduce存到中间文件里
 		enc := json.NewEncoder(reduceFiles[r])
 		err := enc.Encode(&kv)
 		if err != nil {

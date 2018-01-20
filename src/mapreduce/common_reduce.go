@@ -1,11 +1,11 @@
 package mapreduce
 
 import (
-	"sort"
-	"os"
 	"encoding/json"
 	"io"
 	"log"
+	"os"
+	"sort"
 )
 
 // doReduce manages one reduce task: it reads the intermediate
@@ -54,7 +54,7 @@ func doReduce(
 	kvs := []KeyValue{}
 
 	for m := 0; m < nMap; m++ {
-		filename := reduceName(jobName, m, reduceTaskNumber)
+		filename := reduceName(jobName, m, reduceTaskNumber) //map()已经帮reduce()分好组了
 		file, err := os.Open(filename)
 		if err != nil {
 			log.Fatal(err)
@@ -75,7 +75,7 @@ func doReduce(
 	}
 
 	kvMap := make(map[string][]string)
-	for _, kv := range kvs {//主要是为了把不在不同文件里的相同key合并在一起
+	for _, kv := range kvs { //主要是为了把不在不同文件里的相同key合并在一起
 		kvMap[kv.Key] = append(kvMap[kv.Key], kv.Value)
 	}
 

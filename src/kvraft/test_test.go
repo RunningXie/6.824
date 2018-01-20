@@ -478,7 +478,7 @@ func TestSnapshotSize(t *testing.T) {
 	}
 
 	// check that the snapshots are not unreasonably large
-	if cfg.SnapshotSize() > maxsnapshotstate {//要求sanpshot存储的东西不能太多
+	if cfg.SnapshotSize() > maxsnapshotstate { //要求sanpshot存储的东西不能太多
 		t.Fatalf("snapshot too large (%v > %v)", cfg.SnapshotSize(), maxsnapshotstate)
 	}
 

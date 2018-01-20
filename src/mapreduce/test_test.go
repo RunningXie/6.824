@@ -25,7 +25,7 @@ const (
 // Split in words
 func MapFunc(file string, value string) (res []KeyValue) {
 	debug("Map %v\n", value)
-	words := strings.Fields(value)//按照回车拆分
+	words := strings.Fields(value) //按照回车拆分
 	for _, w := range words {
 		kv := KeyValue{w, ""}
 		res = append(res, kv)
@@ -41,7 +41,7 @@ func ReduceFunc(key string, values []string) string {
 	return ""
 }
 
-// Checks input file agaist output file: each input number should show up
+// Checks input file against output file: each input number should show up
 // in the output file in string sorted order
 func check(t *testing.T, files []string) {
 	output, err := os.Open("mrtmp.test")
@@ -71,9 +71,9 @@ func check(t *testing.T, files []string) {
 		var v1 int
 		var v2 int
 		text := outputScanner.Text()
-		n, err := fmt.Sscanf(lines[i], "%d", &v1)
+		n, err := fmt.Sscanf(lines[i], "%d", &v1) //n为成功转换的字符数
 		if n == 1 && err == nil {
-			n, err = fmt.Sscanf(text, "%d", &v2)
+			n, err = fmt.Sscanf(text, "%d", &v2) //对字符串进行固定格式的截取
 		}
 		if err != nil || v1 != v2 {
 			t.Fatalf("line %d: %d != %d err %v\n", i, v1, v2, err)
@@ -89,6 +89,7 @@ func check(t *testing.T, files []string) {
 // Check that they processed at least 1 DoTask RPC.
 func checkWorker(t *testing.T, l []int) {
 	for _, tasks := range l {
+		fmt.Printf("tasks:%v\n", tasks)
 		if tasks == 0 {
 			t.Fatalf("A worker didn't do any work\n")
 		}
@@ -144,9 +145,9 @@ func cleanup(mr *Master) {
 }
 
 func TestSequentialSingle(t *testing.T) {
-	mr := Sequential("test", makeInputs(1), 1, MapFunc, ReduceFunc)
+	mr := Sequential("test", makeInputs(1), 1, MapFunc, ReduceFunc) //makeInputs()生成对应的读取文件
 	mr.Wait()
-	check(t, mr.files)
+	check(t, mr.files) //检查merge文件
 	checkWorker(t, mr.stats)
 	cleanup(mr)
 }
@@ -156,7 +157,7 @@ func TestSequentialMany(t *testing.T) {
 	mr.Wait()
 	check(t, mr.files)
 	checkWorker(t, mr.stats)
-	cleanup(mr)
+	//cleanup(mr)
 }
 
 func TestBasic(t *testing.T) {
@@ -175,7 +176,7 @@ func TestOneFailure(t *testing.T) {
 	mr := setup()
 	// Start 2 workers that fail after 10 tasks
 	go RunWorker(mr.address, port("worker"+strconv.Itoa(0)),
-		MapFunc, ReduceFunc, 10)
+		MapFunc, ReduceFunc, 10) //这个worker将会退出
 	go RunWorker(mr.address, port("worker"+strconv.Itoa(1)),
 		MapFunc, ReduceFunc, -1)
 	mr.Wait()

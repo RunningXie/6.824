@@ -151,7 +151,7 @@ func (cfg *config) ConnectAll() {
 func (cfg *config) partition(p1 []int, p2 []int) { //把server分成了两组，组内的连接正常，两组之间没有连接
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
-	fmt.Printf("[RaftKV]partition servers into: %v %v\n", p1, p2)
+	// log.Printf("partition servers into: %v %v\n", p1, p2)
 	for i := 0; i < len(p1); i++ {
 		cfg.disconnectUnlocked(p1[i], p2)
 		cfg.connectUnlocked(p1[i], p1)
@@ -198,7 +198,7 @@ func (cfg *config) deleteClient(ck *Clerk) {
 
 // caller should hold cfg.mu
 func (cfg *config) ConnectClientUnlocked(ck *Clerk, to []int) {
-
+	// log.Printf("ConnectClient %v to %v\n", ck, to)
 	endnames := cfg.clerks[ck]
 	for j := 0; j < len(to); j++ {
 		s := endnames[to[j]]

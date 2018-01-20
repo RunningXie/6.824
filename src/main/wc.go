@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"mapreduce"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -19,12 +19,12 @@ import (
 func mapF(filename string, contents string) []mapreduce.KeyValue {
 	// TODO: you have to write this function
 	var intermedia []mapreduce.KeyValue
-	words := strings.FieldsFunc(contents,func(c rune) bool {
+	words := strings.FieldsFunc(contents, func(c rune) bool {
 		return !unicode.IsLetter(c)
-	})//strings.Fields是以空格为单位分割的
+	})
 	for _, w := range words {
 		kv := mapreduce.KeyValue{w, strconv.Itoa(1)}
-		intermedia= append(intermedia, kv)
+		intermedia = append(intermedia, kv)
 	}
 	return intermedia
 }
